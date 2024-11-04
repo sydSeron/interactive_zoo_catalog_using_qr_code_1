@@ -23,7 +23,7 @@ dependencies {
 android {
     namespace = "com.bscs3b.g3.interactive_zoo_catalog_using_qr_code"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    ndkVersion = "25.1.8937393"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
