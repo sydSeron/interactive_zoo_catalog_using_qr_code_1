@@ -92,4 +92,6 @@ class _QRScannerState extends State<QRScanner> {
     cameraController.dispose();
     super.dispose();
   }
+
+  //
 }

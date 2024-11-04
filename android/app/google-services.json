@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "483022041333",
+    "project_id": "interactive-zoo-catalog-qr",
+    "storage_bucket": "interactive-zoo-catalog-qr.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:483022041333:android:8843e732115def530415bc",
+        "android_client_info": {
+          "package_name": "com.bscs3b.g3.interactive_zoo_catalog_using_qr_code"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD_A9yKn2L0dF_ohRlFkwyQuIHZyJsm0nU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

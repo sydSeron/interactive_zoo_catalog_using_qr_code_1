@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:interactive_zoo_catalog_using_qr_code/main.dart';
+import 'main.dart';
 
 class ScannedTextScreen extends StatelessWidget {
   final String scannedText;

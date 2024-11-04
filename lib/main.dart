@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:math';
 
-import 'package:interactive_zoo_catalog_using_qr_code/qrScan.dart';
+import 'qrScan.dart';
+import 'credits.dart';
+
+String wallpaper = "";
 
 void main() => runApp(MaterialApp(
   home: Home(),
@@ -19,6 +22,7 @@ class Home extends StatelessWidget {
     List<String> wallp = ['images/wallp1.jpg', 'images/wallp2.jpg', 'images/wallp3.jpg', 'images/wallp4.jpg', 'images/wallp5.jpg', 'images/wallp6.jpg'];
     final random = Random();
     int rand = random.nextInt(wallp.length);
+    wallpaper = wallp[rand];
 
     //Image will change twice on hot reloads, this error is just on hot reload, and will work as expected when app is published
     return Scaffold(
@@ -27,7 +31,7 @@ class Home extends StatelessWidget {
           Container(
             decoration: BoxDecoration(
               image: DecorationImage(
-                image: AssetImage(wallp[rand]),
+                image: AssetImage(wallpaper),
                 fit: BoxFit.cover
               )
             ),
@@ -83,7 +87,9 @@ class Home extends StatelessWidget {
             bottom: 16,
             right: 16,
             child: IconButton(
-              onPressed: () {},
+              onPressed: () {
+                Navigator.of(context).push(MaterialPageRoute(builder: (context)=> Credits()));
+              },
               icon: Icon(
                 Icons.help_outline,
                 color: Colors.white,
