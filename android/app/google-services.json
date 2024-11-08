@@ -1,13 +1,32 @@
 {
   "project_info": {
-    "project_number": "483022041333",
-    "project_id": "interactive-zoo-catalog-qr",
-    "storage_bucket": "interactive-zoo-catalog-qr.firebasestorage.app"
+    "project_number": "1682898445",
+    "project_id": "trials-b0b95",
+    "storage_bucket": "trials-b0b95.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:483022041333:android:8843e732115def530415bc",
+        "mobilesdk_app_id": "1:1682898445:android:c71a64b3c9f8067c5e9f44",
+        "android_client_info": {
+          "package_name": "com.bscs3a.group3.flutter_try"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC5fvwZlsRj1Ltp8IWVAiCrwcD5Rexa1LA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1682898445:android:73a0b5c65587f4215e9f44",
         "android_client_info": {
           "package_name": "com.bscs3b.g3.interactive_zoo_catalog_using_qr_code"
         }
@@ -15,7 +34,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyD_A9yKn2L0dF_ohRlFkwyQuIHZyJsm0nU"
+          "current_key": "AIzaSyC5fvwZlsRj1Ltp8IWVAiCrwcD5Rexa1LA"
         }
       ],
       "services": {

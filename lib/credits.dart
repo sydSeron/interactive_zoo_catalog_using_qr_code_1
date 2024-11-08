@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'adminlogin.dart';
 import 'adminhome.dart';
-import 'main.dart';
 
 int a = 0;
 int c = 0;
 int d = 0;
 
 class Credits extends StatefulWidget {
+  //Wallpaper
   final String wallpaper;
-
   const Credits({Key? key, required this.wallpaper}) : super(key: key);
 
   @override
@@ -31,9 +31,10 @@ class _CreditsState extends State<Credits> {
   @override
   Widget build(BuildContext context) {
     // Redirect once the secret combination is entered
+    // Change to AdminLogin later
     if (a == 1 && c == 2 && d == 0) {
       Future.delayed(Duration.zero, () {
-        Navigator.push(context, MaterialPageRoute(builder: (context) => AdminHome()));
+        Navigator.push(context, MaterialPageRoute(builder: (context) => AdminHome(wallpaper: widget.wallpaper, logged: 'admin')));
       });
     }
 
