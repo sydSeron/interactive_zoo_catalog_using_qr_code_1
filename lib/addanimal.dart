@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:qrcode_component/qr_code.dart';
 import 'classes.dart';
 import 'accessories.dart';
 
@@ -27,14 +28,12 @@ class _AddAnimalState extends State<AddAnimal> {
 
   FirebaseFirestore? firestore;
 
-  void initState()
-  {
+  void initState() {
     super.initState();
     initializeFirebase();
   }
 
-  void initializeFirebase() async
-  {
+  void initializeFirebase() async {
     WidgetsFlutterBinding.ensureInitialized(); // Ensure binding is initialized
     await Firebase.initializeApp(); // Initialize Firebase
     setState(() {
@@ -50,15 +49,15 @@ class _AddAnimalState extends State<AddAnimal> {
         setState(() {
           _image = image;
         });
+      } else {
+        return;
       }
-      else return;
     } catch (e) {
       print("Errors. $e");
     }
   }
 
-  void submit() async
-  {
+  void submit() async {
     // Add here
     List<TextEditingController> conts = [nameCont, populationCont];
     List<TextEditingController> numConts = [populationCont];
@@ -66,7 +65,7 @@ class _AddAnimalState extends State<AddAnimal> {
     //Check for empty fields
     for (TextEditingController cont in conts) {
       if (cont.text.trim().isEmpty) {
-        showOKDialog(context, 'Some fields are empty.', (){
+        showOKDialog(context, 'Some fields are empty.', () {
           for (TextEditingController cont1 in conts) {
             cont1.clear();
           }
@@ -78,7 +77,7 @@ class _AddAnimalState extends State<AddAnimal> {
     //Checks for numeric fields
     for (TextEditingController cont in numConts) {
       if (int.tryParse(cont.text) == null && double.tryParse(cont.text) == null) {
-        showOKDialog(context, 'Some fields require numeric data.', (){
+        showOKDialog(context, 'Some fields require numeric data.', () {
           for (TextEditingController cont1 in numConts) {
             cont1.clear();
           }
@@ -128,7 +127,23 @@ class _AddAnimalState extends State<AddAnimal> {
         'qrcode': animal.qrcode
       });
 
-      showOKDialog(context, animal.qrcode ?? 'QR Failed', (){});
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('QR Code'),
+          content: animal.qrcode != null
+              ? Container(
+              width: 200,
+              height: 200,
+              child: QRCodeComponent(
+              qrData: animal.qrcode ?? '',
+              color: Colors.black,
+              backgroundColor: Colors.white,
+            ),
+          )
+              : Text('No QR code available.'),
+        ),
+      );
     }
   }
 
@@ -181,8 +196,8 @@ class _AddAnimalState extends State<AddAnimal> {
                       TextField(
                         controller: nameCont,
                         decoration: InputDecoration(
-                          labelText: 'Animal Name',
-                          labelStyle: TextStyle(color: Colors.white)
+                            labelText: 'Animal Name',
+                            labelStyle: TextStyle(color: Colors.white)
                         ),
                       ),
                       TextField(

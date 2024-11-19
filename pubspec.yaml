@@ -33,6 +33,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   mobile_scanner: ^2.0.0
   qr_flutter: ^4.0.0
+  qrcode_component: ^2.1.0
   firebase_core: ^3.6.0
   cloud_firestore: ^5.4.4
   firebase_storage: ^12.3.4
@@ -43,8 +44,6 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
-  mobile_scanner: ^2.0.0
-  qr_flutter: ^4.0.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

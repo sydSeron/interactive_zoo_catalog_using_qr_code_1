@@ -464,6 +464,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.1.0"
+  qrcode_component:
+    dependency: "direct main"
+    description:
+      name: qrcode_component
+      sha256: dae7055a77ee619a0f3ea46c6cec56627fb8523e53a5e3a40f775cf17146f1a7
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.1.0"
   sky_engine:
     dependency: transitive
     description: flutter

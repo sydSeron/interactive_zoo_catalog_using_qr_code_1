@@ -32,7 +32,7 @@ class _CreditsState extends State<Credits> {
   Widget build(BuildContext context) {
     // Redirect once the secret combination is entered
     // Change to AdminLogin later
-    if (a == 1 && c == 2 && d == 0) {
+    if (a == 3 && c == 1 && d == 2) {
       Future.delayed(Duration.zero, () {
         Navigator.push(context, MaterialPageRoute(builder: (context) => AdminHome(wallpaper: widget.wallpaper, logged: 'admin')));
       });
