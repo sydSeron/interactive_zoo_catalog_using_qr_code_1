@@ -22,7 +22,15 @@ class _AddAnimalState extends State<AddAnimal> {
 
   //Add here
   final TextEditingController nameCont = TextEditingController();
+  final TextEditingController scinameCont = TextEditingController();
+  final TextEditingController zookeepernameCont = TextEditingController();
+  final TextEditingController feedingtimeCont = TextEditingController();
+  final TextEditingController dietCont = TextEditingController();
+  final TextEditingController behaviorCont = TextEditingController();
+  final TextEditingController quantityCont = TextEditingController();
   final TextEditingController populationCont = TextEditingController();
+  final TextEditingController conservestatusCont = TextEditingController();
+  final TextEditingController naturalhabitatCont = TextEditingController();
 
   XFile? _image;
 
@@ -59,8 +67,8 @@ class _AddAnimalState extends State<AddAnimal> {
 
   void submit() async {
     // Add here
-    List<TextEditingController> conts = [nameCont, populationCont];
-    List<TextEditingController> numConts = [populationCont];
+    List<TextEditingController> conts = [nameCont, scinameCont, zookeepernameCont, feedingtimeCont, dietCont, behaviorCont, quantityCont, populationCont, conservestatusCont, naturalhabitatCont];
+    List<TextEditingController> numConts = [quantityCont, populationCont];
 
     //Check for empty fields
     for (TextEditingController cont in conts) {
@@ -102,9 +110,11 @@ class _AddAnimalState extends State<AddAnimal> {
       } finally {
         Navigator.of(context).pop();
         showOKDialog(context, "Your image has been uploaded successfully.", () {
+          //Clears text fields
           setState(() {
-            nameCont.clear();
-            populationCont.clear();
+            for (TextEditingController cont in conts) {
+              cont.clear();
+            }
             _image = null;
           });
         });
@@ -113,18 +123,36 @@ class _AddAnimalState extends State<AddAnimal> {
       // Add here
       Animal animal = Animal(
         name: nameCont.text,
+        sciname: scinameCont.text,
+        zookeepername: zookeepernameCont.text,
+        feedingtime: feedingtimeCont.text,
+        diet: dietCont.text,
+        behavior: behaviorCont.text,
+        quantity: int.tryParse(quantityCont.text),
         population: int.tryParse(populationCont.text),
+        conservestatus: conservestatusCont.text,
+        naturalhabitat: naturalhabitatCont.text,
         imageurl: url,
         qrcode: generateRandomString(20),
+        dateadded: DateTime.now()
       );
 
       // Store the animal details in Firestore
       // Add here
       await firestore?.collection('animals').add({
         'name': animal.name,
+        'sciname': animal.sciname,
+        'zookeepername': animal.zookeepername,
+        'feedingtime': animal.feedingtime,
+        'diet': animal.diet,
+        'behavior': animal.behavior,
+        'quantity': animal.quantity,
         'population': animal.population,
+        'conservestatus': animal.conservestatus,
+        'naturalhabitat': animal.naturalhabitat,
         'imageurl': animal.imageurl,
-        'qrcode': animal.qrcode
+        'qrcode': animal.qrcode,
+        'dateadded': animal.dateadded
       });
 
       showDialog(
@@ -195,19 +223,97 @@ class _AddAnimalState extends State<AddAnimal> {
                       Divider(height: 20,),
                       TextField(
                         controller: nameCont,
+                        maxLines: null,
+                        style: TextStyle(color: Colors.white),
                         decoration: InputDecoration(
                             labelText: 'Animal Name',
                             labelStyle: TextStyle(color: Colors.white)
                         ),
                       ),
                       TextField(
+                        controller: scinameCont,
+                        maxLines: null,
+                        style: TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                            labelText: 'Scientific Name',
+                            labelStyle: TextStyle(color: Colors.white)
+                        ),
+                      ),
+                      TextField(
+                        controller: zookeepernameCont,
+                        maxLines: null,
+                        style: TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                            labelText: 'Zoo Keeper\'s Name',
+                            labelStyle: TextStyle(color: Colors.white)
+                        ),
+                      ),
+                      TextField(
+                        controller: feedingtimeCont,
+                        maxLines: null,
+                        style: TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                            labelText: 'Feeding Times',
+                            labelStyle: TextStyle(color: Colors.white)
+                        ),
+                      ),
+                      TextField(
+                        controller: dietCont,
+                        maxLines: null,
+                        style: TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                            labelText: 'Diet',
+                            labelStyle: TextStyle(color: Colors.white)
+                        ),
+                      ),
+                      TextField(
+                        controller: behaviorCont,
+                        maxLines: null,
+                        style: TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                            labelText: 'Animal\'s Behavior',
+                            labelStyle: TextStyle(color: Colors.white)
+                        ),
+                      ),
+                      TextField(
+                        controller: quantityCont,
+                        maxLines: null,
+                        style: TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                          labelText: 'Quantity in the Zoo',
+                          labelStyle: TextStyle(color: Colors.white),
+                          hintText: 'Enter a number',
+                        ),
+                        keyboardType: TextInputType.number,
+                      ),
+                      TextField(
                         controller: populationCont,
+                        maxLines: null,
+                        style: TextStyle(color: Colors.white),
                         decoration: InputDecoration(
                           labelText: 'Animal Population',
                           labelStyle: TextStyle(color: Colors.white),
                           hintText: 'Enter a number',
                         ),
                         keyboardType: TextInputType.number,
+                      ),
+                      TextField(
+                        controller: conservestatusCont,
+                        maxLines: null,
+                        style: TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                            labelText: 'Conservation Status',
+                            labelStyle: TextStyle(color: Colors.white)
+                        ),
+                      ),
+                      TextField(
+                        controller: naturalhabitatCont,
+                        maxLines: null,
+                        style: TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                            labelText: 'Natural Habitat',
+                            labelStyle: TextStyle(color: Colors.white)
+                        ),
                       ),
                       SizedBox(height: 20),
                       ElevatedButton(
