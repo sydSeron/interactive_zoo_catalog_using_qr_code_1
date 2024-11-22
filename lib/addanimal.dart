@@ -2,25 +2,28 @@ import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:qrcode_component/qr_code.dart';
 import 'classes.dart';
 import 'accessories.dart';
+import 'dart:ui' as ui;
+import 'package:path_provider/path_provider.dart';
+import 'package:flutter/rendering.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class AddAnimal extends StatefulWidget {
-  //Wallpaper
+  // Wallpaper
   final String wallpaper;
   const AddAnimal({Key? key, required this.wallpaper}) : super(key: key);
+
 
   @override
   State<AddAnimal> createState() => _AddAnimalState();
 }
 
 class _AddAnimalState extends State<AddAnimal> {
-  @override
-
-  //Add here
   final TextEditingController nameCont = TextEditingController();
   final TextEditingController scinameCont = TextEditingController();
   final TextEditingController zookeepernameCont = TextEditingController();
@@ -33,17 +36,18 @@ class _AddAnimalState extends State<AddAnimal> {
   final TextEditingController naturalhabitatCont = TextEditingController();
 
   XFile? _image;
-
   FirebaseFirestore? firestore;
+  final GlobalKey globalKey = GlobalKey();
 
+  @override
   void initState() {
     super.initState();
     initializeFirebase();
   }
 
   void initializeFirebase() async {
-    WidgetsFlutterBinding.ensureInitialized(); // Ensure binding is initialized
-    await Firebase.initializeApp(); // Initialize Firebase
+    WidgetsFlutterBinding.ensureInitialized();
+    await Firebase.initializeApp();
     setState(() {
       firestore = FirebaseFirestore.instance;
     });
@@ -57,20 +61,27 @@ class _AddAnimalState extends State<AddAnimal> {
         setState(() {
           _image = image;
         });
-      } else {
-        return;
       }
     } catch (e) {
-      print("Errors. $e");
+      print("Error: $e");
     }
   }
 
   void submit() async {
-    // Add here
-    List<TextEditingController> conts = [nameCont, scinameCont, zookeepernameCont, feedingtimeCont, dietCont, behaviorCont, quantityCont, populationCont, conservestatusCont, naturalhabitatCont];
+    List<TextEditingController> conts = [
+      nameCont,
+      scinameCont,
+      zookeepernameCont,
+      feedingtimeCont,
+      dietCont,
+      behaviorCont,
+      quantityCont,
+      populationCont,
+      conservestatusCont,
+      naturalhabitatCont
+    ];
     List<TextEditingController> numConts = [quantityCont, populationCont];
 
-    //Check for empty fields
     for (TextEditingController cont in conts) {
       if (cont.text.trim().isEmpty) {
         showOKDialog(context, 'Some fields are empty.', () {
@@ -82,7 +93,6 @@ class _AddAnimalState extends State<AddAnimal> {
       }
     }
 
-    //Checks for numeric fields
     for (TextEditingController cont in numConts) {
       if (int.tryParse(cont.text) == null && double.tryParse(cont.text) == null) {
         showOKDialog(context, 'Some fields require numeric data.', () {
@@ -98,7 +108,6 @@ class _AddAnimalState extends State<AddAnimal> {
       showLoadingDialog(context, 'Uploading...');
       FirebaseStorage storage = FirebaseStorage.instance;
 
-      //image
       File file = File(_image!.path);
       String url = "";
       try {
@@ -106,11 +115,10 @@ class _AddAnimalState extends State<AddAnimal> {
         await storage.ref(filePath).putFile(file);
         url = await storage.ref(filePath).getDownloadURL();
       } catch (e) {
-        print("Errors. $e");
+        print("Error: $e");
       } finally {
         Navigator.of(context).pop();
         showOKDialog(context, "Your image has been uploaded successfully.", () {
-          //Clears text fields
           setState(() {
             for (TextEditingController cont in conts) {
               cont.clear();
@@ -120,7 +128,6 @@ class _AddAnimalState extends State<AddAnimal> {
         });
       }
 
-      // Add here
       Animal animal = Animal(
         name: nameCont.text,
         sciname: scinameCont.text,
@@ -134,11 +141,9 @@ class _AddAnimalState extends State<AddAnimal> {
         naturalhabitat: naturalhabitatCont.text,
         imageurl: url,
         qrcode: generateRandomString(20),
-        dateadded: DateTime.now()
+        dateadded: DateTime.now(),
       );
 
-      // Store the animal details in Firestore
-      // Add here
       await firestore?.collection('animals').add({
         'name': animal.name,
         'sciname': animal.sciname,
@@ -159,17 +164,61 @@ class _AddAnimalState extends State<AddAnimal> {
         context: context,
         builder: (context) => AlertDialog(
           title: Text('QR Code'),
-          content: animal.qrcode != null
-              ? Container(
-              width: 200,
-              height: 200,
-              child: QRCodeComponent(
-              qrData: animal.qrcode ?? '',
-              color: Colors.black,
-              backgroundColor: Colors.white,
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (animal.qrcode != null)
+                RepaintBoundary(
+                  key: globalKey,
+                  child: QRCodeComponent(
+                    qrData: animal.qrcode ?? '',
+                    color: Colors.black,
+                    backgroundColor: Colors.white,
+                  ),
+                )
+              else
+                Text('No QR code available.'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Back'),
             ),
-          )
-              : Text('No QR code available.'),
+            ElevatedButton(
+              onPressed: () async {
+                if (animal.qrcode != null)
+                  var status = await Permission.storage.request();
+                  var status = await Permission.manageExternalStorage.request();
+                try {
+                  final boundary = globalKey.currentContext
+                      ?.findRenderObject() as RenderRepaintBoundary?;
+                  if (boundary != null) {
+                    final image = await boundary.toImage(pixelRatio: 3.0);
+                    final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+                    if (byteData != null) {
+                      Directory? picturesDirectory = await getExternalStorageDirectory();
+                      if (picturesDirectory != null) {
+                        final qrFolder = Directory('/storage/emulated/0/Download');
+                        if (!await qrFolder.exists()) {
+                          await qrFolder.create(recursive: true);
+                        }
+                        final qrImageFile = File('${qrFolder.path}/${animal.qrcode}.png');
+                        await qrImageFile.writeAsBytes(byteData.buffer.asUint8List());
+                        showOKDialog(context, "QR code saved to ${qrImageFile.path}", () {});
+                      }
+                    }
+                  }
+                } catch (e) {
+                  print("Error saving QR code: $e");
+                  showOKDialog(context, "Failed to save QR code.", () {});
+                }
+              },
+              child: Text('Save'),
+            ),
+          ],
         ),
       );
     }
