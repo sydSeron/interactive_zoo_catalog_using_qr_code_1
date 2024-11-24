@@ -116,16 +116,7 @@ class _AddAnimalState extends State<AddAnimal> {
         url = await storage.ref(filePath).getDownloadURL();
       } catch (e) {
         print("Error: $e");
-      } finally {
-        Navigator.of(context).pop();
-        showOKDialog(context, "Your image has been uploaded successfully.", () {
-          setState(() {
-            for (TextEditingController cont in conts) {
-              cont.clear();
-            }
-            _image = null;
-          });
-        });
+        return;
       }
 
       Animal animal = Animal(
@@ -160,68 +151,85 @@ class _AddAnimalState extends State<AddAnimal> {
         'dateadded': animal.dateadded
       });
 
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text('QR Code'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (animal.qrcode != null)
-                RepaintBoundary(
-                  key: globalKey,
-                  child: QRCodeComponent(
-                    qrData: animal.qrcode ?? '',
-                    color: Colors.black,
-                    backgroundColor: Colors.white,
-                  ),
-                )
-              else
-                Text('No QR code available.'),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text('Back'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
+      Navigator.pop(context);
+      showLoadingDialog(context, 'Generating QR Code...');
+      await Future.delayed(Duration(seconds: 1), () {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text('QR Code'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
                 if (animal.qrcode != null)
-                  var status = await Permission.storage.request();
+                  RepaintBoundary(
+                    key: globalKey,
+                    child: QRCodeComponent(
+                      qrData: animal.qrcode ?? '',
+                      color: Colors.black,
+                      backgroundColor: Colors.white,
+                    ),
+                  )
+                else
+                  Text('No QR code available.'),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.pop(context);
+                },
+                child: Text('Back'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  if (animal.qrcode != null)
+                    var status = await Permission.storage.request();
                   var status = await Permission.manageExternalStorage.request();
-                try {
-                  final boundary = globalKey.currentContext
-                      ?.findRenderObject() as RenderRepaintBoundary?;
-                  if (boundary != null) {
-                    final image = await boundary.toImage(pixelRatio: 3.0);
-                    final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-                    if (byteData != null) {
-                      Directory? picturesDirectory = await getExternalStorageDirectory();
-                      if (picturesDirectory != null) {
-                        final qrFolder = Directory('/storage/emulated/0/Download');
-                        if (!await qrFolder.exists()) {
-                          await qrFolder.create(recursive: true);
+                  try {
+                    final boundary = globalKey.currentContext
+                        ?.findRenderObject() as RenderRepaintBoundary?;
+                    if (boundary != null) {
+                      final image = await boundary.toImage(pixelRatio: 3.0);
+                      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+                      if (byteData != null) {
+                        Directory? picturesDirectory = await getExternalStorageDirectory();
+                        if (picturesDirectory != null) {
+                          final qrFolder = Directory('/storage/emulated/0/Download');
+                          if (!await qrFolder.exists()) {
+                            await qrFolder.create(recursive: true);
+                          }
+                          final qrImageFile = File('${qrFolder.path}/${animal.qrcode}.png');
+                          await qrImageFile.writeAsBytes(byteData.buffer.asUint8List());
+                          showOKDialog(context, "QR code saved to ${qrImageFile.path}", () {
+                            Navigator.pop(context);
+                            Navigator.pop(context);
+                          });
                         }
-                        final qrImageFile = File('${qrFolder.path}/${animal.qrcode}.png');
-                        await qrImageFile.writeAsBytes(byteData.buffer.asUint8List());
-                        showOKDialog(context, "QR code saved to ${qrImageFile.path}", () {});
                       }
                     }
+                  } catch (e) {
+                    print("Error saving QR code: $e");
+                    showOKDialog(context, "Failed to save QR code.", () {});
                   }
-                } catch (e) {
-                  print("Error saving QR code: $e");
-                  showOKDialog(context, "Failed to save QR code.", () {});
-                }
-              },
-              child: Text('Save'),
-            ),
-          ],
-        ),
-      );
+                },
+                child: Text('Save'),
+              ),
+            ],
+          ),
+        );
+      });
     }
+
+    showOKDialog(context, "Your image has been uploaded successfully.", () {
+      setState(() {
+        for (TextEditingController cont in conts) {
+          cont.clear();
+        }
+        _image = null;
+      });
+    });
   }
 
   Widget build(BuildContext context) {

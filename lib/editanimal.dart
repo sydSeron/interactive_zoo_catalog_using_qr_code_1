@@ -36,6 +36,7 @@ class _EditanimalState extends State<Editanimal> {
 
   XFile? _image;
   FirebaseFirestore? firestore;
+  final GlobalKey globalKey = GlobalKey();
 
   @override
   void initState() {
@@ -186,6 +187,79 @@ class _EditanimalState extends State<Editanimal> {
     showOKDialog(context, "Your changes saved successfully.", () {
       Navigator.pop(context);
       Navigator.pop(context);
+    });
+  }
+
+  Future<void> regenqr () async {
+    showLoadingDialog(context, 'Generating QR Code...');
+
+    await Future.delayed(Duration(seconds: 1), () {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('QR Code'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (widget.animal.qrcode != null)
+                RepaintBoundary(
+                  key: globalKey,
+                  child: QRCodeComponent(
+                    qrData: widget.animal.qrcode ?? '',
+                    color: Colors.black,
+                    backgroundColor: Colors.white,
+                  ),
+                )
+              else
+                Text('No QR code available.'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.pop(context);
+              },
+              child: Text('Back'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (widget.animal.qrcode != null)
+                  var status = await Permission.storage.request();
+                var status = await Permission.manageExternalStorage.request();
+                try {
+                  final boundary = globalKey.currentContext
+                      ?.findRenderObject() as RenderRepaintBoundary?;
+                  if (boundary != null) {
+                    final image = await boundary.toImage(pixelRatio: 3.0);
+                    final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+                    if (byteData != null) {
+                      Directory? picturesDirectory = await getExternalStorageDirectory();
+                      if (picturesDirectory != null) {
+                        final qrFolder = Directory('/storage/emulated/0/Download');
+                        if (!await qrFolder.exists()) {
+                          await qrFolder.create(recursive: true);
+                        }
+                        final qrImageFile = File('${qrFolder.path}/${widget.animal.qrcode}.png');
+                        await qrImageFile.writeAsBytes(byteData.buffer.asUint8List());
+                        showOKDialog(context, "QR code saved to ${qrImageFile.path}", () {
+                          Navigator.pop(context);
+                          Navigator.pop(context);
+                        });
+                      }
+                    }
+                  }
+                } catch (e) {
+                  print("Error saving QR code: $e");
+                  Navigator.pop(context);
+                  showOKDialog(context, "Failed to save QR code.", () {});
+                }
+              },
+              child: Text('Save'),
+            ),
+          ],
+        ),
+      );
     });
   }
 
@@ -342,7 +416,7 @@ class _EditanimalState extends State<Editanimal> {
                       ),
                       ElevatedButton(
                         onPressed: () {
-
+                          regenqr();
                         },
                         child: Text('Regenerate QR Code', style: TextStyle(color: Colors.white),),
                         style: ElevatedButton.styleFrom(
