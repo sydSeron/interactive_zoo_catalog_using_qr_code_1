@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'addanimal.dart';
 import 'animallist.dart';
+import 'adminsettings.dart';
 
 class AdminHome extends StatelessWidget {
   //Wallpaper
@@ -104,7 +105,9 @@ class AdminHome extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: ElevatedButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => Adminsettings(wallpaper: wallpaper, logged: logged,)));
+                        },
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
