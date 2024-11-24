@@ -48,3 +48,15 @@ String generateRandomString(int length) {
       length, (index) => characters[random.nextInt(characters.length)])
       .join();
 }
+
+String linkToFileName(String link) {
+  Uri uri = Uri.parse(link);
+  String path = uri.pathSegments.last;
+
+  String fileName = path
+      .replaceAll('%3A', ':') // Replace %3A (colon)
+      .replaceAll('%20', ' ') // Replace %20 (space)
+      .replaceAll('%2F', '/'); // Optionally, handle other encodings
+
+  return fileName;
+}
