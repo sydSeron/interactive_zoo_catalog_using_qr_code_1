@@ -1,25 +1,25 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'classes.dart';
 import 'package:bcrypt/bcrypt.dart';
 import 'accessories.dart';
 
-class Adminadd extends StatefulWidget {
+class Adminchangepassword extends StatefulWidget {
   //Wallpaper
   final String wallpaper;
   final String logged;
-  const Adminadd({Key? key, required this.wallpaper, required this.logged}) : super(key: key);
+  const Adminchangepassword({Key? key, required this.wallpaper, required this.logged}) : super(key: key);
 
   @override
-  State<Adminadd> createState() => _AdminaddState();
+  State<Adminchangepassword> createState() => _AdminchangepasswordState();
 }
 
-class _AdminaddState extends State<Adminadd> {
+class _AdminchangepasswordState extends State<Adminchangepassword> {
   @override
-  final TextEditingController usernameCont = TextEditingController();
-  final TextEditingController passwordCont = TextEditingController();
-  final TextEditingController password2Cont = TextEditingController();
+  final TextEditingController oldpCont = TextEditingController();
+  final TextEditingController newpCont = TextEditingController();
+  final TextEditingController newp2Cont = TextEditingController();
 
   FirebaseFirestore? firestore;
 
@@ -37,36 +37,50 @@ class _AdminaddState extends State<Adminadd> {
     });
   }
 
-  void submit(String username, String pass, String pass2) async {
-    //Checks for empty fields
-    if (username.isEmpty || pass.isEmpty || pass2.isEmpty) {
-      showOKDialog(context, 'Some fields are empty.', (){});
+  void submit() async {
+    //Checks for empty strings
+    if (oldpCont.text == null || newpCont.text == null || newp2Cont.text == null) {
+      showOKDialog(context, 'Some fields are empty.', () {});
+      return;
+    }
+    if (oldpCont.text.isEmpty || newpCont.text.isEmpty || newp2Cont.text.isEmpty) {
+      showOKDialog(context, 'Some fields are empty.', () {});
+      return;
+    }
+    //Check for password mismatch
+    if (newpCont.text != newp2Cont.text) {
+      showOKDialog(context, 'The passwords do not match.', () {});
       return;
     }
 
-    //Check if confirm password matches
-    if (pass != pass2) {
-      showOKDialog(context, 'Passwords do not match.', () {});
-      return;
-    }
-
-    //Check if username already exists
+    //Check for old password and for same password
+    showLoadingDialog(context, 'Checking...');
     QuerySnapshot querySnapshot = (await firestore?.collection('users')
-        .where('username', isEqualTo: username)
+        .where('username', isEqualTo: widget.logged)
         .get()) as QuerySnapshot<Object?>;
-    if (querySnapshot.size > 0) {
-      showOKDialog(context, 'Username already exists.', () {});
+    var fetched = querySnapshot.docs.first;
+    if (!BCrypt.checkpw(oldpCont.text, fetched['password'])) {
+      Navigator.pop(context);
+      showOKDialog(context, 'Wrong password.', () {});
+      return;
+    }
+    if (BCrypt.checkpw(newpCont.text, fetched['password'])) {
+      Navigator.pop(context);
+      showOKDialog(context, 'New password cannot be the old password.', () {});
       return;
     }
 
-    //Save information
-    showLoadingDialog(context, 'Adding...');
-    User user = User(username: username, hashedPassword: BCrypt.hashpw(pass, BCrypt.gensalt()));
-    firestore?.collection('users').add({
-      'username': user.username,
-      'password': user.hashedPassword
-    });
-    Log log = Log(type: 'User', account: widget.logged, action: 'Add', name: user.username, dateandtime: DateTime.now().toString());
+    //Saves
+    Navigator.pop(context);
+    showLoadingDialog(context, 'Changing...');
+    User user = User(username: widget.logged, hashedPassword: BCrypt.hashpw(newpCont.text, BCrypt.gensalt()));
+    for (QueryDocumentSnapshot doc in querySnapshot.docs) {
+      await doc.reference.update({
+        'username': user.username,
+        'password': user.hashedPassword
+      });
+    }
+    Log log = Log(type: 'User', account: widget.logged, action: 'Edit', name: user.username, dateandtime: DateTime.now().toString());
     firestore?.collection('logs').add({
       'type': log.type,
       'account': log.account,
@@ -74,8 +88,9 @@ class _AdminaddState extends State<Adminadd> {
       'name': log.name,
       'dateandtime': log.dateandtime
     });
+
     Navigator.pop(context);
-    showOKDialog(context, 'Successfully added account!', (){
+    showOKDialog(context, 'Successfully changed password!', (){
       Navigator.pop(context);
     });
   }
@@ -85,7 +100,7 @@ class _AdminaddState extends State<Adminadd> {
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
-        title: Text('Add Account', style: TextStyle(color: Colors.white),),
+        title: Text('Change Password', style: TextStyle(color: Colors.white),),
         iconTheme: IconThemeData(color: Colors.white),
       ),
       body: Stack(
@@ -108,24 +123,24 @@ class _AdminaddState extends State<Adminadd> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   TextField(
-                    controller: usernameCont,
+                    controller: oldpCont,
                     style: TextStyle(color: Colors.white),
                     decoration: InputDecoration(
-                        labelText: 'Username',
+                        labelText: 'Old Password',
                         labelStyle: TextStyle(color: Colors.white)
                     ),
                   ),
                   TextField(
-                    controller: passwordCont,
+                    controller: newpCont,
                     style: TextStyle(color: Colors.white),
                     decoration: InputDecoration(
-                        labelText: 'Password',
+                        labelText: 'New Password',
                         labelStyle: TextStyle(color: Colors.white)
                     ),
                     obscureText: true,
                   ),
                   TextField(
-                    controller: password2Cont,
+                    controller: newp2Cont,
                     style: TextStyle(color: Colors.white),
                     decoration: InputDecoration(
                         labelText: 'Confirm Password',
@@ -136,12 +151,7 @@ class _AdminaddState extends State<Adminadd> {
                   SizedBox(height: 20),
                   ElevatedButton(
                     onPressed: () {
-                      if (usernameCont.text == null || passwordCont.text == null || password2Cont.text == null) {
-                        showOKDialog(context, 'Some fields are empty.', (){});
-                      }
-                      else {
-                        submit(usernameCont.text, passwordCont.text, password2Cont.text);
-                      }
+                      submit();
                     },
                     child: Text('Submit', style: TextStyle(color: Colors.white),),
                     style: ElevatedButton.styleFrom(
@@ -152,7 +162,7 @@ class _AdminaddState extends State<Adminadd> {
               ),
             ),
           )
-        ],
+        ]
       )
     );
   }

@@ -67,7 +67,6 @@ class _EditanimalState extends State<Editanimal> {
   }
 
   void submit() async {
-    print("Submit started");
     List<TextEditingController> conts = [
       nameCont,
       scinameCont,
@@ -103,13 +102,11 @@ class _EditanimalState extends State<Editanimal> {
         return;
       }
     }
-    print("All checkers passed");
 
     String url = "";
     bool hasError = false;
     showLoadingDialog(context, 'Uploading...');
     if (_image?.path != null && _image!.path.isNotEmpty) {
-      print("New photo");
       FirebaseStorage storage = FirebaseStorage.instance;
       File file = File(_image!.path);
 
@@ -123,7 +120,6 @@ class _EditanimalState extends State<Editanimal> {
         String oldfile = linkToFileName(widget.animal.imageurl ?? '');
         Reference ref = storage.ref().child(oldfile);
         await ref.delete();
-        print('File deleted successfully.');
 
       } catch (e) {
         print("Error: $e");
@@ -131,7 +127,6 @@ class _EditanimalState extends State<Editanimal> {
       }
     }
     else {
-      print("Default image.");
       url = widget.animal.imageurl ?? '';
     }
 
