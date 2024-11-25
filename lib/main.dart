@@ -1,15 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:interactive_zoo_catalog_using_qr_code/login_screen.dart';
+import 'package:interactive_zoo_catalog_using_qr_code/login_screen.dart'; // import AdminLogin or whichever screen
 import 'dart:math';
+import 'package:firebase_core/firebase_core.dart'; // Import Firebase Core
 
 import 'qrScan.dart';
 import 'credits.dart';
 
-void main() => runApp(MaterialApp(
-  home: Home(),
-  debugShowCheckedModeBanner: false,
-));
+void main() async{
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+
+  runApp(MaterialApp(
+    home: Home(),
+    debugShowCheckedModeBanner: false,
+  ));
+
+}
 
 class Home extends StatefulWidget {
   @override

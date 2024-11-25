@@ -1,19 +1,17 @@
 import 'package:flutter/material.dart';
 import 'accessories.dart';
 import 'adminhome.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:bcrypt/bcrypt.dart';
 
 class AdminLogin extends StatelessWidget {
-  //Wallpaper
-  final String wallpaper;
+  final String wallpaper; // Wallpaper passed as a parameter
   AdminLogin({Key? key, required this.wallpaper}) : super(key: key);
 
-  @override
-
-  //Consider having encryption with password in the future
-  //Consider firebasing to allow dynamic admin account settings
   final TextEditingController usernameCont = TextEditingController();
   final TextEditingController passwordCont = TextEditingController();
 
+  @override
   Widget build(BuildContext context) {
     String logged = "";
 
@@ -46,16 +44,8 @@ class AdminLogin extends StatelessWidget {
                 ),
                 SizedBox(height: 20),
                 ElevatedButton(
-                  onPressed: () {
-                    if (usernameCont.text == 'admin' && passwordCont.text == '1234') {
-                      logged = usernameCont.text;
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => AdminHome(wallpaper: wallpaper, logged: logged,)));
-                    }
-                    else {
-                      showOKDialog(context, 'Wrong username or password', () {});
-                      usernameCont.clear();
-                      passwordCont.clear();
-                    }
+                  onPressed: () async {
+                    await login(context, usernameCont.text, passwordCont.text);
                   },
                   child: Text('Submit', style: TextStyle(color: Colors.white),),
                   style: ElevatedButton.styleFrom(
@@ -68,5 +58,44 @@ class AdminLogin extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> login(BuildContext context, String username, String password) async {
+    if (username.isEmpty || password.isEmpty) {
+      showOKDialog(context, 'Please fill in both fields', () {});
+      return;
+    }
+
+    try {
+      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .where('username', isEqualTo: username)
+          .get();
+
+      if (querySnapshot.size == 0) {
+        showOKDialog(context, 'No account found with that username.', () {});
+        return;
+      }
+
+      var adminData = querySnapshot.docs[0];
+      String storedHashedPassword = adminData['password'];
+
+      bool isPasswordCorrect = BCrypt.checkpw(password, storedHashedPassword);
+
+      if (isPasswordCorrect) {
+        String logged = username;
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => AdminHome(wallpaper: wallpaper, logged: logged),
+          ),
+        );
+      } else {
+        showOKDialog(context, 'Incorrect Password!', () {});
+        passwordCont.clear();
+      }
+    } catch (e) {
+      showOKDialog(context, 'An error occurred: $e', () {});
+    }
   }
 }

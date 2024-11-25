@@ -34,7 +34,7 @@ class _CreditsState extends State<Credits> {
     // Change to AdminLogin later
     if (a == 1 && c == 2 && d == 0) {
       Future.delayed(Duration.zero, () {
-        Navigator.push(context, MaterialPageRoute(builder: (context) => AdminHome(wallpaper: widget.wallpaper, logged: 'admin2')));
+        Navigator.push(context, MaterialPageRoute(builder: (context) => AdminLogin(wallpaper: widget.wallpaper)));
       });
     }
 
