@@ -1,11 +1,11 @@
-import 'package:bcrypt/bcrypt.dart';
 import 'package:flutter/material.dart';
 import 'adminadd.dart';
 import 'accessories.dart';
 import 'classes.dart';
+import 'adminchangepassword.dart';
+import 'adminsecurity.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 
 class Adminsettings extends StatefulWidget {
   //Wallpaper
@@ -62,7 +62,7 @@ class _AdminsettingsState extends State<Adminsettings> {
                         'account': log.account,
                         'action': log.action,
                         'name': log.name,
-                        'dataandtime': log.dateandtime
+                        'dateandtime': log.dateandtime
                       });
 
                       Navigator.pop(context); // Close the loading dialog
@@ -118,7 +118,9 @@ class _AdminsettingsState extends State<Adminsettings> {
                     Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: ElevatedButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => Adminchangepassword(wallpaper: widget.wallpaper, logged: widget.logged,)));
+                        },
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -188,7 +190,9 @@ class _AdminsettingsState extends State<Adminsettings> {
                     Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: ElevatedButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => Adminsecurity(wallpaper: widget.wallpaper, logged: widget.logged,)));
+                        },
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
