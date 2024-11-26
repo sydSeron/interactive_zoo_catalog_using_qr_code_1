@@ -8,7 +8,8 @@ import 'classes.dart';
 
 class Animallist extends StatefulWidget {
   final String wallpaper;
-  const Animallist({Key? key, required this.wallpaper}) : super(key: key);
+  final String logged;
+  const Animallist({Key? key, required this.wallpaper, required this.logged}) : super(key: key);
 
   @override
   State<Animallist> createState() => _AnimallistState();
@@ -52,31 +53,56 @@ class _AnimallistState extends State<Animallist> {
             TextButton(
               child: Text('YES'),
               onPressed: () async {
-                showLoadingDialog(context, 'Deleting...');
-
-                //For the image file
-                FirebaseStorage storage = FirebaseStorage.instance;
-                String oldfile = linkToFileName(animal.imageurl);
-                Reference ref = storage.ref().child(oldfile);
-
-                //For firebase
-                QuerySnapshot querySnapshot = await FirebaseFirestore.instance
-                    .collection('animals')
-                    .where('qrcode', isEqualTo: animal.qrcode)
-                    .get();
-
-                if (querySnapshot.docs.isNotEmpty) {
-                  for (var doc in querySnapshot.docs) {
-                    await doc.reference.delete();
-                    await ref.delete();
-
+                showLoadingDialog(context, 'Rechecking credentials...');
+                isLoggedCorrectly(widget.logged).then((isCorrect) async {
+                  if (!isCorrect) {
                     Navigator.pop(context);
-                    showOKDialog(context, 'Successfully deleted.', () {
-                      Navigator.pop(context);
-                      Navigator.pop(context);
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      showOKDialog(context, 'Please login again.', () {
+                        Navigator.pop(context);
+                        Navigator.pop(context);
+                        Navigator.pop(context);
+                      });
                     });
                   }
-                }
+                  else {
+                    Navigator.pop(context);
+                    showLoadingDialog(context, 'Deleting...');
+
+                    //For the image file
+                    FirebaseStorage storage = FirebaseStorage.instance;
+                    String oldfile = linkToFileName(animal.imageurl);
+                    Reference ref = storage.ref().child(oldfile);
+
+                    //For firebase
+                    QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+                        .collection('animals')
+                        .where('qrcode', isEqualTo: animal.qrcode)
+                        .get();
+
+                    if (querySnapshot.docs.isNotEmpty) {
+                      for (var doc in querySnapshot.docs) {
+                        await doc.reference.delete();
+                        await ref.delete();
+
+                        Log log = Log(type: 'Animal', account: widget.logged, action: 'Delete', name: doc['name'], dateandtime: DateTime.now().toString());
+                        firestore?.collection('logs').add({
+                          'type': log.type,
+                          'account': log.account,
+                          'action': log.action,
+                          'name': log.name,
+                          'dateandtime': log.dateandtime
+                        });
+
+                        Navigator.pop(context);
+                        showOKDialog(context, 'Successfully deleted.', () {
+                          Navigator.pop(context);
+                          Navigator.pop(context);
+                        });
+                      }
+                    }
+                  }
+                });
               },
             ),
             TextButton(
@@ -130,7 +156,7 @@ class _AnimallistState extends State<Animallist> {
                           children: [
                             TextButton(
                               onPressed: () {
-                                Navigator.push(context, MaterialPageRoute(builder: (context) => Editanimal(wallpaper: widget.wallpaper, animal: animal,)));
+                                Navigator.push(context, MaterialPageRoute(builder: (context) => Editanimal(wallpaper: widget.wallpaper, animal: animal, logged: widget.logged)));
                               },
                               child: Text('EDIT', style: TextStyle(
                                 color: Colors.white,

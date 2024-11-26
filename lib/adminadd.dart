@@ -38,45 +38,61 @@ class _AdminaddState extends State<Adminadd> {
   }
 
   void submit(String username, String pass, String pass2) async {
-    //Checks for empty fields
-    if (username.isEmpty || pass.isEmpty || pass2.isEmpty) {
-      showOKDialog(context, 'Some fields are empty.', (){});
-      return;
-    }
+    showLoadingDialog(context, 'Rechecking credentials...');
+    isLoggedCorrectly(widget.logged).then((isCorrect) async {
+      if (!isCorrect) {
+        Navigator.pop(context);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          showOKDialog(context, 'Please login again.', () {
+            Navigator.pop(context);
+            Navigator.pop(context);
+            Navigator.pop(context);
+          });
+        });
+      }
+      else {
+        Navigator.pop(context);
+        //Checks for empty fields
+        if (username.isEmpty || pass.isEmpty || pass2.isEmpty) {
+          showOKDialog(context, 'Some fields are empty.', (){});
+          return;
+        }
 
-    //Check if confirm password matches
-    if (pass != pass2) {
-      showOKDialog(context, 'Passwords do not match.', () {});
-      return;
-    }
+        //Check if confirm password matches
+        if (pass != pass2) {
+          showOKDialog(context, 'Passwords do not match.', () {});
+          return;
+        }
 
-    //Check if username already exists
-    QuerySnapshot querySnapshot = (await firestore?.collection('users')
-        .where('username', isEqualTo: username)
-        .get()) as QuerySnapshot<Object?>;
-    if (querySnapshot.size > 0) {
-      showOKDialog(context, 'Username already exists.', () {});
-      return;
-    }
+        //Check if username already exists
+        QuerySnapshot querySnapshot = (await firestore?.collection('users')
+            .where('username', isEqualTo: username)
+            .get()) as QuerySnapshot<Object?>;
+        if (querySnapshot.size > 0) {
+          showOKDialog(context, 'Username already exists.', () {});
+          return;
+        }
 
-    //Save information
-    showLoadingDialog(context, 'Adding...');
-    User user = User(username: username, hashedPassword: BCrypt.hashpw(pass, BCrypt.gensalt()));
-    firestore?.collection('users').add({
-      'username': user.username,
-      'password': user.hashedPassword
-    });
-    Log log = Log(type: 'User', account: widget.logged, action: 'Add', name: user.username, dateandtime: DateTime.now().toString());
-    firestore?.collection('logs').add({
-      'type': log.type,
-      'account': log.account,
-      'action': log.action,
-      'name': log.name,
-      'dateandtime': log.dateandtime
-    });
-    Navigator.pop(context);
-    showOKDialog(context, 'Successfully added account!', (){
-      Navigator.pop(context);
+        //Save information
+        showLoadingDialog(context, 'Adding...');
+        User user = User(username: username, hashedPassword: BCrypt.hashpw(pass, BCrypt.gensalt()));
+        firestore?.collection('users').add({
+          'username': user.username,
+          'password': user.hashedPassword
+        });
+        Log log = Log(type: 'User', account: widget.logged, action: 'Add', name: user.username, dateandtime: DateTime.now().toString());
+        firestore?.collection('logs').add({
+          'type': log.type,
+          'account': log.account,
+          'action': log.action,
+          'name': log.name,
+          'dateandtime': log.dateandtime
+        });
+        Navigator.pop(context);
+        showOKDialog(context, 'Successfully added account!', (){
+          Navigator.pop(context);
+        });
+      }
     });
   }
 

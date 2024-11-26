@@ -16,7 +16,8 @@ import 'package:permission_handler/permission_handler.dart';
 class AddAnimal extends StatefulWidget {
   // Wallpaper
   final String wallpaper;
-  const AddAnimal({Key? key, required this.wallpaper}) : super(key: key);
+  final String logged;
+  const AddAnimal({Key? key, required this.wallpaper, required this.logged}) : super(key: key);
 
 
   @override
@@ -68,168 +69,193 @@ class _AddAnimalState extends State<AddAnimal> {
   }
 
   void submit() async {
-    List<TextEditingController> conts = [
-      nameCont,
-      scinameCont,
-      zookeepernameCont,
-      feedingtimeCont,
-      dietCont,
-      behaviorCont,
-      quantityCont,
-      populationCont,
-      conservestatusCont,
-      naturalhabitatCont
-    ];
-    List<TextEditingController> numConts = [quantityCont, populationCont];
-
-    for (TextEditingController cont in conts) {
-      if (cont.text.trim().isEmpty) {
-        showOKDialog(context, 'Some fields are empty.', () {
-          for (TextEditingController cont1 in conts) {
-            cont1.clear();
-          }
+    showLoadingDialog(context, 'Rechecking credentials...');
+    isLoggedCorrectly(widget.logged).then((isCorrect) async {
+      if (!isCorrect) {
+        Navigator.pop(context);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          showOKDialog(context, 'Please login again.', () {
+            Navigator.pop(context);
+            Navigator.pop(context);
+          });
         });
-        return;
       }
-    }
+      else {
+        Navigator.pop(context);
+        List<TextEditingController> conts = [
+          nameCont,
+          scinameCont,
+          zookeepernameCont,
+          feedingtimeCont,
+          dietCont,
+          behaviorCont,
+          quantityCont,
+          populationCont,
+          conservestatusCont,
+          naturalhabitatCont
+        ];
+        List<TextEditingController> numConts = [quantityCont, populationCont];
 
-    for (TextEditingController cont in numConts) {
-      if (int.tryParse(cont.text) == null && double.tryParse(cont.text) == null) {
-        showOKDialog(context, 'Some fields require numeric data.', () {
-          for (TextEditingController cont1 in numConts) {
-            cont1.clear();
-          }
-        });
-        return;
-      }
-    }
-
-    if (_image != null) {
-      showLoadingDialog(context, 'Uploading...');
-      FirebaseStorage storage = FirebaseStorage.instance;
-
-      File file = File(_image!.path);
-      String url = "";
-      try {
-        String filePath = 'images/${DateTime.now()}.png';
-        await storage.ref(filePath).putFile(file);
-        url = await storage.ref(filePath).getDownloadURL();
-      } catch (e) {
-        print("Error: $e");
-        return;
-      }
-
-      Animal animal = Animal(
-        name: nameCont.text,
-        sciname: scinameCont.text,
-        zookeepername: zookeepernameCont.text,
-        feedingtime: feedingtimeCont.text,
-        diet: dietCont.text,
-        behavior: behaviorCont.text,
-        quantity: int.tryParse(quantityCont.text),
-        population: int.tryParse(populationCont.text),
-        conservestatus: conservestatusCont.text,
-        naturalhabitat: naturalhabitatCont.text,
-        imageurl: url,
-        qrcode: generateRandomString(20),
-        dateadded: DateTime.now(),
-      );
-
-      await firestore?.collection('animals').add({
-        'name': animal.name,
-        'sciname': animal.sciname,
-        'zookeepername': animal.zookeepername,
-        'feedingtime': animal.feedingtime,
-        'diet': animal.diet,
-        'behavior': animal.behavior,
-        'quantity': animal.quantity,
-        'population': animal.population,
-        'conservestatus': animal.conservestatus,
-        'naturalhabitat': animal.naturalhabitat,
-        'imageurl': animal.imageurl,
-        'qrcode': animal.qrcode,
-        'dateadded': animal.dateadded
-      });
-
-      Navigator.pop(context);
-      showLoadingDialog(context, 'Generating QR Code...');
-      await Future.delayed(Duration(seconds: 1), () {
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: Text('QR Code'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (animal.qrcode != null)
-                  RepaintBoundary(
-                    key: globalKey,
-                    child: QRCodeComponent(
-                      qrData: animal.qrcode ?? '',
-                      color: Colors.black,
-                      backgroundColor: Colors.white,
-                    ),
-                  )
-                else
-                  Text('No QR code available.'),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  Navigator.pop(context);
-                },
-                child: Text('Back'),
-              ),
-              ElevatedButton(
-                onPressed: () async {
-                  if (animal.qrcode != null)
-                    var status = await Permission.storage.request();
-                  var status = await Permission.manageExternalStorage.request();
-                  try {
-                    final boundary = globalKey.currentContext
-                        ?.findRenderObject() as RenderRepaintBoundary?;
-                    if (boundary != null) {
-                      final image = await boundary.toImage(pixelRatio: 3.0);
-                      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-                      if (byteData != null) {
-                        Directory? picturesDirectory = await getExternalStorageDirectory();
-                        if (picturesDirectory != null) {
-                          final qrFolder = Directory('/storage/emulated/0/Download');
-                          if (!await qrFolder.exists()) {
-                            await qrFolder.create(recursive: true);
-                          }
-                          final qrImageFile = File('${qrFolder.path}/${animal.qrcode}.png');
-                          await qrImageFile.writeAsBytes(byteData.buffer.asUint8List());
-                          showOKDialog(context, "QR code saved to ${qrImageFile.path}", () {
-                            Navigator.pop(context);
-                            Navigator.pop(context);
-                          });
-                        }
-                      }
-                    }
-                  } catch (e) {
-                    print("Error saving QR code: $e");
-                    showOKDialog(context, "Failed to save QR code.", () {});
-                  }
-                },
-                child: Text('Save'),
-              ),
-            ],
-          ),
-        );
-      });
-    }
-
-    showOKDialog(context, "Your image has been uploaded successfully.", () {
-      setState(() {
+        //Checking for empty fields
         for (TextEditingController cont in conts) {
-          cont.clear();
+          if (cont.text.trim().isEmpty) {
+            showOKDialog(context, 'Some fields are empty.', () {
+              for (TextEditingController cont1 in conts) {
+                cont1.clear();
+              }
+            });
+            return;
+          }
         }
-        _image = null;
-      });
-    });
+
+        //Checking for numeric fields
+        for (TextEditingController cont in numConts) {
+          if (int.tryParse(cont.text) == null && double.tryParse(cont.text) == null) {
+            showOKDialog(context, 'Some fields require numeric data.', () {
+              for (TextEditingController cont1 in numConts) {
+                cont1.clear();
+              }
+            });
+            return;
+          }
+        }
+
+        if (_image != null) {
+          showLoadingDialog(context, 'Uploading...');
+          FirebaseStorage storage = FirebaseStorage.instance;
+
+          File file = File(_image!.path);
+          String url = "";
+          try {
+            String filePath = 'images/${DateTime.now()}.png';
+            await storage.ref(filePath).putFile(file);
+            url = await storage.ref(filePath).getDownloadURL();
+          } catch (e) {
+            print("Error: $e");
+            return;
+          }
+
+          Animal animal = Animal(
+            name: nameCont.text,
+            sciname: scinameCont.text,
+            zookeepername: zookeepernameCont.text,
+            feedingtime: feedingtimeCont.text,
+            diet: dietCont.text,
+            behavior: behaviorCont.text,
+            quantity: int.tryParse(quantityCont.text),
+            population: int.tryParse(populationCont.text),
+            conservestatus: conservestatusCont.text,
+            naturalhabitat: naturalhabitatCont.text,
+            imageurl: url,
+            qrcode: generateRandomString(20),
+            dateadded: DateTime.now(),
+          );
+
+          await firestore?.collection('animals').add({
+            'name': animal.name,
+            'sciname': animal.sciname,
+            'zookeepername': animal.zookeepername,
+            'feedingtime': animal.feedingtime,
+            'diet': animal.diet,
+            'behavior': animal.behavior,
+            'quantity': animal.quantity,
+            'population': animal.population,
+            'conservestatus': animal.conservestatus,
+            'naturalhabitat': animal.naturalhabitat,
+            'imageurl': animal.imageurl,
+            'qrcode': animal.qrcode,
+            'dateadded': animal.dateadded
+          });
+          Log log = Log(type: 'Animal', account: widget.logged, action: 'Add', name: animal.name, dateandtime: DateTime.now().toString());
+          firestore?.collection('logs').add({
+            'type': log.type,
+            'account': log.account,
+            'action': log.action,
+            'name': log.name,
+            'dateandtime': log.dateandtime
+          });
+
+          Navigator.pop(context);
+          showLoadingDialog(context, 'Generating QR Code...');
+          await Future.delayed(Duration(seconds: 1), () {
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: Text('QR Code'),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (animal.qrcode != null)
+                      RepaintBoundary(
+                        key: globalKey,
+                        child: QRCodeComponent(
+                          qrData: animal.qrcode ?? '',
+                          color: Colors.black,
+                          backgroundColor: Colors.white,
+                        ),
+                      )
+                    else
+                      Text('No QR code available.'),
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      Navigator.pop(context);
+                    },
+                    child: Text('Back'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () async {
+                      if (animal.qrcode != null)
+                        var status = await Permission.storage.request();
+                      var status = await Permission.manageExternalStorage.request();
+                      try {
+                        final boundary = globalKey.currentContext
+                            ?.findRenderObject() as RenderRepaintBoundary?;
+                        if (boundary != null) {
+                          final image = await boundary.toImage(pixelRatio: 3.0);
+                          final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+                          if (byteData != null) {
+                            Directory? picturesDirectory = await getExternalStorageDirectory();
+                            if (picturesDirectory != null) {
+                              final qrFolder = Directory('/storage/emulated/0/Download');
+                              if (!await qrFolder.exists()) {
+                                await qrFolder.create(recursive: true);
+                              }
+                              final qrImageFile = File('${qrFolder.path}/${animal.qrcode}.png');
+                              await qrImageFile.writeAsBytes(byteData.buffer.asUint8List());
+                              showOKDialog(context, "QR code saved to ${qrImageFile.path}", () {
+                                Navigator.pop(context);
+                                Navigator.pop(context);
+                              });
+                            }
+                          }
+                        }
+                      } catch (e) {
+                        print("Error saving QR code: $e");
+                        showOKDialog(context, "Failed to save QR code.", () {});
+                      }
+                    },
+                    child: Text('Save'),
+                  ),
+                ],
+              ),
+            );
+          });
+        }
+
+        showOKDialog(context, "Your image has been uploaded successfully.", () {
+          setState(() {
+            for (TextEditingController cont in conts) {
+              cont.clear();
+            }
+            _image = null;
+          });
+        });
+          }
+        });
   }
 
   Widget build(BuildContext context) {

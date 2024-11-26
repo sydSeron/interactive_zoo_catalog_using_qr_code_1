@@ -35,55 +35,71 @@ class _AdminsettingsState extends State<Adminsettings> {
   }
 
   void delete(BuildContext context) {
-    showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            content: Text('Are you sure you want to delete this? This is irreversible.'),
-            actions: [
-              TextButton(
-                child: Text('YES'),
-                onPressed: () async {
-                    //Delete
-                    showLoadingDialog(context, 'Deleting...');
-                    QuerySnapshot querySnapshot = await FirebaseFirestore.instance
-                        .collection('users')
-                        .where('username', isEqualTo: widget.logged)
-                        .get();
-                    if (querySnapshot.docs.isNotEmpty) {
-                      for (var doc in querySnapshot.docs) {
-                        await doc.reference.delete();
-                      }
+    showLoadingDialog(context, 'Rechecking credentials...');
+    isLoggedCorrectly(widget.logged).then((isCorrect) {
+      if (!isCorrect) {
+        Navigator.pop(context);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          showOKDialog(context, 'Please login again.', () {
+            Navigator.pop(context);
+            Navigator.pop(context);
+            Navigator.pop(context);
+          });
+        });
+      }
+      else {
+        Navigator.pop(context);
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              content: Text('Are you sure you want to delete this? This is irreversible.'),
+              actions: [
+                TextButton(
+                  child: Text('YES'),
+                  onPressed: () async {
+                      //Delete
+                      showLoadingDialog(context, 'Deleting...');
+                      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+                          .collection('users')
+                          .where('username', isEqualTo: widget.logged)
+                          .get();
+                      if (querySnapshot.docs.isNotEmpty) {
+                        for (var doc in querySnapshot.docs) {
+                          await doc.reference.delete();
+                        }
 
-                      //Record in logs
-                      Log log = Log(type: 'Account', account: widget.logged, action: 'Delete', name: widget.logged, dateandtime: DateTime.now().toString());
-                      firestore?.collection('logs').add({
-                        'type': log.type,
-                        'account': log.account,
-                        'action': log.action,
-                        'name': log.name,
-                        'dateandtime': log.dateandtime
-                      });
+                        //Record in logs
+                        Log log = Log(type: 'Account', account: widget.logged, action: 'Delete', name: widget.logged, dateandtime: DateTime.now().toString());
+                        firestore?.collection('logs').add({
+                          'type': log.type,
+                          'account': log.account,
+                          'action': log.action,
+                          'name': log.name,
+                          'dateandtime': log.dateandtime
+                        });
 
-                      Navigator.pop(context); // Close the loading dialog
-                      showOKDialog(context, 'Successfully deleted account.', () {
-                        Navigator.pop(context);
-                        Navigator.pop(context);
-                        Navigator.pop(context);
-                      });
-                  }
-                },
-              ),
-              TextButton(
-                child: Text('NO'),
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-              ),
-            ],
-          );
+                        Navigator.pop(context); // Close the loading dialog
+                        showOKDialog(context, 'Successfully deleted account.', () {
+                          Navigator.pop(context);
+                          Navigator.pop(context);
+                          Navigator.pop(context);
+                        });
+                    }
+                  },
+                ),
+                TextButton(
+                  child: Text('NO'),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                ),
+              ],
+            );
+          }
+      );
         }
-    );
+      });
   }
 
   @override
