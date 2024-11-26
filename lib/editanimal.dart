@@ -15,8 +15,9 @@ import 'package:permission_handler/permission_handler.dart';
 
 class Editanimal extends StatefulWidget {
   final String wallpaper;
+  final String logged;
   final Animal animal;
-  const Editanimal({Key? key, required this.wallpaper, required this.animal}) : super(key: key);
+  const Editanimal({Key? key, required this.wallpaper, required this.logged, required this.animal}) : super(key: key);
 
   @override
   State<Editanimal> createState() => _EditanimalState();
@@ -67,122 +68,147 @@ class _EditanimalState extends State<Editanimal> {
   }
 
   void submit() async {
-    List<TextEditingController> conts = [
-      nameCont,
-      scinameCont,
-      zookeepernameCont,
-      feedingtimeCont,
-      dietCont,
-      behaviorCont,
-      quantityCont,
-      populationCont,
-      conservestatusCont,
-      naturalhabitatCont
-    ];
-    List<TextEditingController> numConts = [quantityCont, populationCont];
+    showLoadingDialog(context, 'Rechecking credentials...');
+    isLoggedCorrectly(widget.logged).then((isCorrect) async {
+      if (!isCorrect) {
+        Navigator.pop(context);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          showOKDialog(context, 'Please login again.', () {
+            Navigator.pop(context);
+            Navigator.pop(context);
+            Navigator.pop(context);
+          });
+        });
+      }
+      else {
+        Navigator.pop(context);
+        List<TextEditingController> conts = [
+          nameCont,
+          scinameCont,
+          zookeepernameCont,
+          feedingtimeCont,
+          dietCont,
+          behaviorCont,
+          quantityCont,
+          populationCont,
+          conservestatusCont,
+          naturalhabitatCont
+        ];
+        List<TextEditingController> numConts = [quantityCont, populationCont];
 
-    for (TextEditingController cont in conts) {
-      if (cont.text.trim().isEmpty) {
-        showOKDialog(context, 'Some fields are empty.', () {
-          for (TextEditingController cont1 in conts) {
-            cont1.clear();
+        for (TextEditingController cont in conts) {
+          if (cont.text.trim().isEmpty) {
+            showOKDialog(context, 'Some fields are empty.', () {
+              for (TextEditingController cont1 in conts) {
+                cont1.clear();
+              }
+            });
+            return;
+          }
+        }
+
+        for (TextEditingController cont in numConts) {
+          if (int.tryParse(cont.text) == null && double.tryParse(cont.text) == null) {
+            showOKDialog(context, 'Some fields require numeric data.', () {
+              for (TextEditingController cont1 in numConts) {
+                cont1.clear();
+              }
+            });
+            return;
+          }
+        }
+
+        String url = "";
+        bool hasError = false;
+        showLoadingDialog(context, 'Uploading...');
+        if (_image?.path != null && _image!.path.isNotEmpty) {
+          FirebaseStorage storage = FirebaseStorage.instance;
+          File file = File(_image!.path);
+
+          try {
+            //Upload new photo
+            String filePath = 'images/${DateTime.now()}.png';
+            await storage.ref(filePath).putFile(file);
+            url = await storage.ref(filePath).getDownloadURL();
+
+            //Delete old photo
+            String oldfile = linkToFileName(widget.animal.imageurl ?? '');
+            Reference ref = storage.ref().child(oldfile);
+            await ref.delete();
+
+          } catch (e) {
+            print("Error: $e");
+            hasError = true;
+          }
+        }
+        else {
+          url = widget.animal.imageurl ?? '';
+        }
+
+        if (hasError) {
+          return;
+        }
+
+        Navigator.of(context).pop();
+
+        Animal animal = Animal(
+          name: nameCont.text,
+          sciname: scinameCont.text,
+          zookeepername: zookeepernameCont.text,
+          feedingtime: feedingtimeCont.text,
+          diet: dietCont.text,
+          behavior: behaviorCont.text,
+          quantity: int.tryParse(quantityCont.text),
+          population: int.tryParse(populationCont.text),
+          conservestatus: conservestatusCont.text,
+          naturalhabitat: naturalhabitatCont.text,
+          imageurl: url,
+          qrcode: widget.animal.qrcode,
+        );
+
+        // Query Firestore for documents where the field matches the value
+        QuerySnapshot querySnapshot = (await firestore?.collection('animals')
+            .where('qrcode', isEqualTo: animal.qrcode ?? '')
+            .get()) as QuerySnapshot<Object?>;
+
+        // Check if any documents match the query
+        if (querySnapshot != null && querySnapshot.docs.isNotEmpty) {
+          for (QueryDocumentSnapshot doc in querySnapshot.docs) {
+            await doc.reference.update({
+              'name': animal.name,
+              'sciname': animal.sciname,
+              'zookeepername': animal.zookeepername,
+              'feedingtime': animal.feedingtime,
+              'diet': animal.diet,
+              'behavior': animal.behavior,
+              'quantity': animal.quantity,
+              'population': animal.population,
+              'conservestatus': animal.conservestatus,
+              'naturalhabitat': animal.naturalhabitat,
+              'imageurl': animal.imageurl,
+              'qrcode': animal.qrcode,
+            });
+
+            Log log = Log(type: 'Animal', account: widget.logged, action: 'Edit', name: animal.name, dateandtime: DateTime.now().toString());
+            firestore?.collection('logs').add({
+              'type': log.type,
+              'account': log.account,
+              'action': log.action,
+              'name': log.name,
+              'dateandtime': log.dateandtime
+            });
+          }
+          print("Animal(s) updated successfully.");
+        } else {
+          print("No animals found matching the criteria.");
+        }
+
+        showOKDialog(context, "Your changes saved successfully.", () {
+          Navigator.pop(context);
+          Navigator.pop(context);
+        });
           }
         });
-        return;
-      }
-    }
-
-    for (TextEditingController cont in numConts) {
-      if (int.tryParse(cont.text) == null && double.tryParse(cont.text) == null) {
-        showOKDialog(context, 'Some fields require numeric data.', () {
-          for (TextEditingController cont1 in numConts) {
-            cont1.clear();
-          }
-        });
-        return;
-      }
-    }
-
-    String url = "";
-    bool hasError = false;
-    showLoadingDialog(context, 'Uploading...');
-    if (_image?.path != null && _image!.path.isNotEmpty) {
-      FirebaseStorage storage = FirebaseStorage.instance;
-      File file = File(_image!.path);
-
-      try {
-        //Upload new photo
-        String filePath = 'images/${DateTime.now()}.png';
-        await storage.ref(filePath).putFile(file);
-        url = await storage.ref(filePath).getDownloadURL();
-
-        //Delete old photo
-        String oldfile = linkToFileName(widget.animal.imageurl ?? '');
-        Reference ref = storage.ref().child(oldfile);
-        await ref.delete();
-
-      } catch (e) {
-        print("Error: $e");
-        hasError = true;
-      }
-    }
-    else {
-      url = widget.animal.imageurl ?? '';
-    }
-
-    if (hasError) {
-      return;
-    }
-
-    Navigator.of(context).pop();
-
-    Animal animal = Animal(
-      name: nameCont.text,
-      sciname: scinameCont.text,
-      zookeepername: zookeepernameCont.text,
-      feedingtime: feedingtimeCont.text,
-      diet: dietCont.text,
-      behavior: behaviorCont.text,
-      quantity: int.tryParse(quantityCont.text),
-      population: int.tryParse(populationCont.text),
-      conservestatus: conservestatusCont.text,
-      naturalhabitat: naturalhabitatCont.text,
-      imageurl: url,
-      qrcode: widget.animal.qrcode,
-    );
-
-    // Query Firestore for documents where the field matches the value
-    QuerySnapshot querySnapshot = (await firestore?.collection('animals')
-        .where('qrcode', isEqualTo: animal.qrcode ?? '')
-        .get()) as QuerySnapshot<Object?>;
-
-    // Check if any documents match the query
-    if (querySnapshot != null && querySnapshot.docs.isNotEmpty) {
-      for (QueryDocumentSnapshot doc in querySnapshot.docs) {
-        await doc.reference.update({
-          'name': animal.name,
-          'sciname': animal.sciname,
-          'zookeepername': animal.zookeepername,
-          'feedingtime': animal.feedingtime,
-          'diet': animal.diet,
-          'behavior': animal.behavior,
-          'quantity': animal.quantity,
-          'population': animal.population,
-          'conservestatus': animal.conservestatus,
-          'naturalhabitat': animal.naturalhabitat,
-          'imageurl': animal.imageurl,
-          'qrcode': animal.qrcode,
-        });
-      }
-      print("Animal(s) updated successfully.");
-    } else {
-      print("No animals found matching the criteria.");
-    }
-
-    showOKDialog(context, "Your changes saved successfully.", () {
-      Navigator.pop(context);
-      Navigator.pop(context);
-    });
   }
 
   Future<void> regenqr () async {

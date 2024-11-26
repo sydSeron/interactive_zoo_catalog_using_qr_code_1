@@ -1,4 +1,6 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'dart:math';
 
 void showLoadingDialog(BuildContext context, String text) {
@@ -59,4 +61,25 @@ String linkToFileName(String link) {
       .replaceAll('%2F', '/'); // Optionally, handle other encodings
 
   return fileName;
+}
+
+Future<bool> isLoggedCorrectly (String username) async {
+  FirebaseFirestore? firestore;
+
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  firestore = FirebaseFirestore.instance;
+
+  try {
+    QuerySnapshot querySnapshot = (await firestore?.collection('users')
+        .where('username', isEqualTo: username)
+        .get()) as QuerySnapshot<Object?>;
+    if (querySnapshot == null || querySnapshot.size <= 0) {
+      return false;
+    }
+    return true;
+  } catch (e) {
+    print(e);
+    return false;
+  }
 }

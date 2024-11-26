@@ -1,14 +1,22 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
+import 'accessories.dart';
 import 'addanimal.dart';
 import 'animallist.dart';
 import 'adminsettings.dart';
 
-class AdminHome extends StatelessWidget {
+class AdminHome extends StatefulWidget {
   //Wallpaper
   final String wallpaper;
   final String logged;
   const AdminHome({Key? key, required this.wallpaper, required this.logged}) : super(key: key);
 
+  @override
+  State<AdminHome> createState() => _AdminHomeState();
+}
+
+class _AdminHomeState extends State<AdminHome> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -23,7 +31,7 @@ class AdminHome extends StatelessWidget {
           Container(
             decoration: BoxDecoration(
               image: DecorationImage(
-                image: AssetImage(wallpaper),
+                image: AssetImage(widget.wallpaper),
                 fit: BoxFit.cover,
               ),
             ),
@@ -41,7 +49,7 @@ class AdminHome extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.all(20.0),
                       child: Text(
-                        'Hello, ' + logged,
+                        'Hello, ' + widget.logged,
                         style: TextStyle(
                           color: Colors.white,
                           fontFamily: 'RobotoCondensed',
@@ -56,7 +64,21 @@ class AdminHome extends StatelessWidget {
                           padding: const EdgeInsets.all(8.0),
                           child: ElevatedButton(
                             onPressed: () {
-                              Navigator.push(context, MaterialPageRoute(builder: (context) => AddAnimal(wallpaper: wallpaper)));
+                              showLoadingDialog(context, 'Rechecking credentials...');
+                              isLoggedCorrectly(widget.logged).then((isCorrect) {
+                                if (!isCorrect) {
+                                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                                    Navigator.pop(context);
+                                    showOKDialog(context, 'Please login again.', () {
+                                      Navigator.pop(context);
+                                    });
+                                  });
+                                }
+                                else {
+                                  Navigator.pop(context);
+                                  Navigator.push(context, MaterialPageRoute(builder: (context) => AddAnimal(wallpaper: widget.wallpaper, logged: widget.logged,)));
+                                }
+                              });
                             },
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -80,7 +102,21 @@ class AdminHome extends StatelessWidget {
                           padding: const EdgeInsets.all(8.0),
                           child: ElevatedButton(
                             onPressed: () {
-                              Navigator.push(context, MaterialPageRoute(builder: (context) => Animallist(wallpaper: wallpaper)));
+                              showLoadingDialog(context, 'Rechecking credentials...');
+                              isLoggedCorrectly(widget.logged).then((isCorrect) {
+                                if (!isCorrect) {
+                                  Navigator.pop(context);
+                                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                                    showOKDialog(context, 'Please login again.', () {
+                                      Navigator.pop(context);
+                                    });
+                                  });
+                                }
+                                else {
+                                  Navigator.pop(context);
+                                  Navigator.push(context, MaterialPageRoute(builder: (context) => Animallist(wallpaper: widget.wallpaper, logged: widget.logged,)));
+                                }
+                              });
                             },
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -106,7 +142,21 @@ class AdminHome extends StatelessWidget {
                       padding: const EdgeInsets.all(8.0),
                       child: ElevatedButton(
                         onPressed: () {
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => Adminsettings(wallpaper: wallpaper, logged: logged,)));
+                          showLoadingDialog(context, 'Rechecking credentials...');
+                          isLoggedCorrectly(widget.logged).then((isCorrect) {
+                            if (!isCorrect) {
+                              Navigator.pop(context);
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                showOKDialog(context, 'Please login again.', () {
+                                  Navigator.pop(context);
+                                });
+                              });
+                            }
+                            else {
+                              Navigator.pop(context);
+                              Navigator.push(context, MaterialPageRoute(builder: (context) => Adminsettings(wallpaper: widget.wallpaper, logged: widget.logged,)));
+                            }
+                          });
                         },
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
