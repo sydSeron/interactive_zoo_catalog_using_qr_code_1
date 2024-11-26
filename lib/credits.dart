@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'adminlogin.dart';
-import 'adminhome.dart';
 
 int a = 0;
 int c = 0;
@@ -34,7 +33,7 @@ class _CreditsState extends State<Credits> {
     // Change to AdminLogin later
     if (a == 1 && c == 2 && d == 0) {
       Future.delayed(Duration.zero, () {
-        Navigator.push(context, MaterialPageRoute(builder: (context) => AdminHome(wallpaper: widget.wallpaper, logged: 'admin',)));
+        Navigator.push(context, MaterialPageRoute(builder: (context) => AdminLogin(wallpaper: widget.wallpaper)));
       });
     }
 

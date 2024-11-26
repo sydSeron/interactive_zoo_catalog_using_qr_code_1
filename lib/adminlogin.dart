@@ -14,47 +14,64 @@ class AdminLogin extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     String logged = "";
-
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
+        backgroundColor: Colors.transparent,
         title: Text('Login', style: TextStyle(color: Colors.white),),
-        backgroundColor: Colors.deepPurple,
         iconTheme: IconThemeData(color: Colors.white),
       ),
-      body: SafeArea(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                TextField(
-                  controller: usernameCont,
-                  decoration: InputDecoration(
-                    labelText: 'Username',
-                  ),
+      body: Center(
+        child: Stack(
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage(wallpaper),
+                  fit: BoxFit.cover,
                 ),
-                TextField(
-                  controller: passwordCont,
-                  decoration: InputDecoration(
-                    labelText: 'Password',
-                  ),
-                  obscureText: true,
-                ),
-                SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: () async {
-                    await login(context, usernameCont.text, passwordCont.text);
-                  },
-                  child: Text('Submit', style: TextStyle(color: Colors.white),),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.deepPurple,
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
+            Container(
+              color: Colors.black.withOpacity(0.5),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(15.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  TextField(
+                    controller: usernameCont,
+                    style: TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                        labelText: 'Username',
+                        labelStyle: TextStyle(color: Colors.white)
+                    ),
+                  ),
+                  TextField(
+                    controller: passwordCont,
+                    style: TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                        labelText: 'Password',
+                        labelStyle: TextStyle(color: Colors.white)
+                    ),
+                    obscureText: true,
+                  ),
+                  SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () async {
+                      await login(context, usernameCont.text, passwordCont.text);
+                    },
+                    child: Text('Submit', style: TextStyle(color: Colors.white),),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.black.withOpacity(0.1),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ]
         ),
       ),
     );
@@ -84,12 +101,8 @@ class AdminLogin extends StatelessWidget {
 
       if (isPasswordCorrect) {
         String logged = username;
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => AdminHome(wallpaper: wallpaper, logged: logged),
-          ),
-        );
+        Navigator.pop(context);
+        Navigator.push(context, MaterialPageRoute(builder: (context) => AdminHome(wallpaper: wallpaper, logged: logged),),);
       } else {
         showOKDialog(context, 'Incorrect Password!', () {});
         passwordCont.clear();
