@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:interactive_zoo_catalog_using_qr_code/login_screen.dart'; // import AdminLogin or whichever screen
 import 'dart:math';
 import 'package:firebase_core/firebase_core.dart'; // Import Firebase Core
 import 'accessories.dart'; // Import connectivity service
-
 import 'qrScan.dart';
 import 'credits.dart';
 
@@ -92,22 +90,6 @@ class _HomeState extends State<Home> {
     });
   }
 
-  void clickedCount() {
-    setState(() {
-      countClicker++;
-      if (countClicker == 7) {
-        showWindow();
-        countClicker = 0;
-      }
-    });
-  }
-
-  void showWindow() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (context) => adminLogin()),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     // To remove notification and navigation bar
@@ -147,28 +129,37 @@ class _HomeState extends State<Home> {
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              GestureDetector(
-                onTap: clickedCount,
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 8.0),
-                  child: Text(
-                    'Zoo Catalogue',
-                    style: TextStyle(
-                      fontSize: 36,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      shadows: [
-                        Shadow(
-                          blurRadius: 5.0,
-                          color: Colors.black,
-                          offset: Offset(2.0, 2.0),
-                        ),
-                      ],
+              Text(
+                'MZQR',
+                style: TextStyle(
+                  fontSize: 60,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  shadows: [
+                    Shadow(
+                      blurRadius: 5.0,
+                      color: Colors.black,
+                      offset: Offset(2.0, 2.0),
                     ),
-                  ),
+                  ],
                 ),
               ),
-              SizedBox(height: 150.0),
+              Text(
+                'Manila Zoo Interactive QR Catalog',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  shadows: [
+                    Shadow(
+                      blurRadius: 5.0,
+                      color: Colors.black,
+                      offset: Offset(2.0, 2.0),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 80.0),
               LayoutBuilder(
                 builder: (context, constraints) {
                   double totalPadding = 64.0;

@@ -54,10 +54,17 @@ class _QRScannerState extends State<QRScanner> {
 
   Future<Animal> fetch(String code) async {
     //Returns null members if no match found
+    showLoadingDialog(context, 'Fetching...');
     Animal animal = Animal();
     QuerySnapshot querySnapshot = await firestore!.collection('animals')
         .where('qrcode', isEqualTo: code)
         .get();
+
+    if (querySnapshot.docs.isEmpty) {
+      Navigator.pop(context);
+      animal = Animal(name: '');
+      return animal;
+    }
 
     if (querySnapshot.docs.isNotEmpty) {
       animal = Animal(
@@ -79,6 +86,7 @@ class _QRScannerState extends State<QRScanner> {
 
     image = Image.network(animal.imageurl ?? '');
     await _loadImage(image);
+    Navigator.pop(context);
 
     return animal;
   }
@@ -106,13 +114,13 @@ class _QRScannerState extends State<QRScanner> {
       );
       return;
     }
-    showLoadingDialog(context, 'Fetching...');
-    Animal animal = await fetch(code);
-    Navigator.of(context).pop();
+    Animal? animal = await fetch(code);
 
-    if (animal.name == null) {
-      Navigator.pop(context);
-      showOKDialog(context, 'Error finding the animal.', () {setState((){});});
+    if (animal.name == '') {
+      showOKDialog(context, 'Error finding the animal.', () {
+        Navigator.pop(context);
+        setState(() {});
+      });
     }
     else {
       Navigator.push(

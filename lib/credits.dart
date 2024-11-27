@@ -31,15 +31,24 @@ class _CreditsState extends State<Credits> {
   Widget build(BuildContext context) {
     // Redirect once the secret combination is entered
     // Change to AdminLogin later
-    if (a == 1 && c == 2 && d == 0) {
+    if (a == 5 && c == 3 && d == 5) {
       Future.delayed(Duration.zero, () {
         Navigator.push(context, MaterialPageRoute(builder: (context) => AdminLogin(wallpaper: widget.wallpaper)));
       });
     }
 
     // Can be firebased so it is editable
-    String aboutus = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.";
-    String contact = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.";
+    String aboutus =
+      "The Manila Zoological and Botanical Garden is the only public zoo in the City of Manila it first opened on July 25, 1959 during the tenure of Manila Mayor Arsenio H. Lacson.\n\n"
+        "The Zoo's main attraction is Ma'ali (Vishwama'ali) a female Asian Elephant gifted by the government of Sri Lanka in 1977 and Kois the White Tiger, a male white Siberian Tiger donated by Zoocobia in 2021.\n\n"
+        "Manila Zoo also provide forever home to more than 550 specimens of exotic wildlife representing 13 species of mammals, 38 species of avian, and 21 species of reptiles.\n\n"
+        "All animals are securely monitored to their lovely habitats while being maintained by group of Professional Veterinarians.\n\n"
+        "Manila Zoo also nurtures a botanical garden where more than 10.000 plants are being grown and propagated.";
+    String contact =
+      "For inquiries, you may reach us through:\n\n"
+        "Email: manilazoo@manila.gov.ph\n"
+        "Social Media: https://www.facebook.com/ManilaZooPH.OfficialPage\n"
+        "Address: M. Adriatico St, Malate, Manila, 1004 Metro Manila";
     String develop = "This application is made as a final requirement for the subject Operating System by:\n Arañez, Charlie Magne \n Nacu, Adrian \n Rodeo, RJ \n Samonte, Rolan Jay \n Seron, Jan Emman \n\nSubmitted to: \n Dr. Arlene Evangelista \n College of Computing Sciences \n Eulogio \"Amang\" Rodriguez Institute of Science and Technology \n";
 
     const double defpad = 15.0;
