@@ -7,7 +7,7 @@ import 'animallist.dart';
 import 'adminsettings.dart';
 
 class AdminHome extends StatefulWidget {
-  //Wallpaper
+  // Wallpaper
   final String wallpaper;
   final String logged;
   const AdminHome({Key? key, required this.wallpaper, required this.logged}) : super(key: key);
@@ -63,7 +63,18 @@ class _AdminHomeState extends State<AdminHome> {
                         Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: ElevatedButton(
-                            onPressed: () {
+                            onPressed: () async {
+                              // Check connection before proceeding
+                              bool isConnected = await connectivityService.checkConnection();
+                              if (!isConnected) {
+                                // Show SnackBar if no connection
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('No internet connection')),
+                                );
+                                return;
+                              }
+
+                              // Proceed if connected
                               showLoadingDialog(context, 'Rechecking credentials...');
                               isLoggedCorrectly(widget.logged).then((isCorrect) {
                                 if (!isCorrect) {
@@ -73,8 +84,7 @@ class _AdminHomeState extends State<AdminHome> {
                                       Navigator.pop(context);
                                     });
                                   });
-                                }
-                                else {
+                                } else {
                                   Navigator.pop(context);
                                   Navigator.push(context, MaterialPageRoute(builder: (context) => AddAnimal(wallpaper: widget.wallpaper, logged: widget.logged,)));
                                 }
@@ -101,7 +111,18 @@ class _AdminHomeState extends State<AdminHome> {
                         Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: ElevatedButton(
-                            onPressed: () {
+                            onPressed: () async {
+                              // Check connection before proceeding
+                              bool isConnected = await connectivityService.checkConnection();
+                              if (!isConnected) {
+                                // Show SnackBar if no connection
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('No internet connection')),
+                                );
+                                return;
+                              }
+
+                              // Proceed if connected
                               showLoadingDialog(context, 'Rechecking credentials...');
                               isLoggedCorrectly(widget.logged).then((isCorrect) {
                                 if (!isCorrect) {
@@ -111,8 +132,7 @@ class _AdminHomeState extends State<AdminHome> {
                                       Navigator.pop(context);
                                     });
                                   });
-                                }
-                                else {
+                                } else {
                                   Navigator.pop(context);
                                   Navigator.push(context, MaterialPageRoute(builder: (context) => Animallist(wallpaper: widget.wallpaper, logged: widget.logged,)));
                                 }
@@ -141,7 +161,18 @@ class _AdminHomeState extends State<AdminHome> {
                     Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: ElevatedButton(
-                        onPressed: () {
+                        onPressed: () async {
+                          // Check connection before proceeding
+                          bool isConnected = await connectivityService.checkConnection();
+                          if (!isConnected) {
+                            // Show SnackBar if no connection
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('No internet connection')),
+                            );
+                            return;
+                          }
+
+                          // Proceed if connected
                           showLoadingDialog(context, 'Rechecking credentials...');
                           isLoggedCorrectly(widget.logged).then((isCorrect) {
                             if (!isCorrect) {
@@ -151,8 +182,7 @@ class _AdminHomeState extends State<AdminHome> {
                                   Navigator.pop(context);
                                 });
                               });
-                            }
-                            else {
+                            } else {
                               Navigator.pop(context);
                               Navigator.push(context, MaterialPageRoute(builder: (context) => Adminsettings(wallpaper: widget.wallpaper, logged: widget.logged,)));
                             }

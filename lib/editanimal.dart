@@ -68,6 +68,13 @@ class _EditanimalState extends State<Editanimal> {
   }
 
   void submit() async {
+    bool isConnected = await connectivityService.checkConnection();
+    if (!isConnected) {
+      showOKDialog(context, 'No internet connection. Please try again.', () {
+        Navigator.pop(context);
+      });
+      return;
+    }
     showLoadingDialog(context, 'Rechecking credentials...');
     isLoggedCorrectly(widget.logged).then((isCorrect) async {
       if (!isCorrect) {

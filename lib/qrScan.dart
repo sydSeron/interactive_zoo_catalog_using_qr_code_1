@@ -18,6 +18,7 @@ class _QRScannerState extends State<QRScanner> {
   FirebaseFirestore? firestore;
 
   late Image image;
+  bool isConnected = true;
 
   @override
   void initState() {
@@ -25,6 +26,7 @@ class _QRScannerState extends State<QRScanner> {
     initializeFirebase();
     cameraController = MobileScannerController();
     startScanning();
+    _checkConnection();
   }
 
   void initializeFirebase() async
@@ -99,11 +101,17 @@ class _QRScannerState extends State<QRScanner> {
   }
 
   Future<void> onSubmit(String code) async {
+    if (!isConnected) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('No Internet Connection')),
+      );
+      return;
+    }
     showLoadingDialog(context, 'Fetching...');
     Animal animal = await fetch(code);
     Navigator.of(context).pop();
 
     if (animal.name == null) {
+      Navigator.pop(context);
       showOKDialog(context, 'Error finding the animal.', () {setState((){});});
     }
     else {
@@ -111,6 +119,13 @@ class _QRScannerState extends State<QRScanner> {
           context, MaterialPageRoute(builder: (context) => Viewer(animal: animal))
       );
     }
+  }
+
+  void _checkConnection() async {
+    bool connectionStatus = await connectivityService.checkConnection();
+    setState(() {
+      isConnected = connectionStatus;
+    });
   }
 
   @override

@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'dart:math';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 void showLoadingDialog(BuildContext context, String text) {
   showDialog(
@@ -20,6 +23,30 @@ void showLoadingDialog(BuildContext context, String text) {
     },
   );
 }
+
+class ConnectivityService {
+  final Connectivity _connectivity = Connectivity();
+  final StreamController<bool> _connectionStatusController = StreamController<bool>.broadcast();
+
+  ConnectivityService() {
+    _connectivity.onConnectivityChanged.listen((ConnectivityResult result) {
+      final isConnected = result == ConnectivityResult.mobile || result == ConnectivityResult.wifi;
+      _connectionStatusController.add(isConnected);
+    });
+  }
+  Stream<bool> get connectionStatusStream => _connectionStatusController.stream;
+
+  Future<bool> checkConnection() async {
+    var result = await _connectivity.checkConnectivity();
+    return result == ConnectivityResult.mobile || result == ConnectivityResult.wifi;
+  }
+  void dispose() {
+    _connectionStatusController.close();
+  }
+}
+final connectivityService = ConnectivityService();
+
+
 
 void showOKDialog(BuildContext context, String text, VoidCallback onOkPressed) {
   showDialog(
@@ -82,4 +109,6 @@ Future<bool> isLoggedCorrectly (String username) async {
     print(e);
     return false;
   }
+
+
 }
