@@ -46,7 +46,10 @@ class _AdminaddState extends State<Adminadd> {
       });
       return;
     }
-    
+
+    WidgetsFlutterBinding.ensureInitialized();
+    await Firebase.initializeApp();
+
     showLoadingDialog(context, 'Rechecking credentials...');
     isLoggedCorrectly(widget.logged).then((isCorrect) async {
       if (!isCorrect) {

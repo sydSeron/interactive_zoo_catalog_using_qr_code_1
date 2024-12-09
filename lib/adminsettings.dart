@@ -34,7 +34,10 @@ class _AdminsettingsState extends State<Adminsettings> {
     });
   }
 
-  void delete(BuildContext context) {
+  void delete(BuildContext context) async {
+    WidgetsFlutterBinding.ensureInitialized();
+    await Firebase.initializeApp();
+
     showLoadingDialog(context, 'Rechecking credentials...');
     isLoggedCorrectly(widget.logged).then((isCorrect) {
       if (!isCorrect) {

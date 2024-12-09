@@ -19,6 +19,9 @@ class _AnimallistState extends State<Animallist> {
   FirebaseFirestore? firestore;
 
   Future<List<Animal>> fetch() async {
+    WidgetsFlutterBinding.ensureInitialized();
+    await Firebase.initializeApp();
+
     List<Animal> animals = [];
     QuerySnapshot querySnapshot = await firestore!.collection('animals').get();
 
@@ -43,6 +46,9 @@ class _AnimallistState extends State<Animallist> {
   }
 
   Future<void> delete(animal) async {
+    WidgetsFlutterBinding.ensureInitialized();
+    await Firebase.initializeApp();
+
     showDialog(
       context: context,
       barrierDismissible: true,

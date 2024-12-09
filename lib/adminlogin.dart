@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'accessories.dart';
 import 'adminhome.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:bcrypt/bcrypt.dart';
 
 class AdminLogin extends StatelessWidget {
@@ -86,6 +87,9 @@ class AdminLogin extends StatelessWidget {
       );
       return;
     }
+
+    WidgetsFlutterBinding.ensureInitialized();
+    await Firebase.initializeApp();
 
     if (username.isEmpty || password.isEmpty) {
       showOKDialog(context, 'Please fill in both fields', () {});

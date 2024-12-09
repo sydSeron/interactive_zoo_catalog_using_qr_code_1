@@ -5,10 +5,13 @@ import 'package:firebase_core/firebase_core.dart'; // Import Firebase Core
 import 'accessories.dart'; // Import connectivity service
 import 'qrScan.dart';
 import 'credits.dart';
+import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   runApp(MaterialApp(
     home: Home(),

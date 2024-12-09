@@ -53,6 +53,9 @@ class _QRScannerState extends State<QRScanner> {
   }
 
   Future<Animal> fetch(String code) async {
+    WidgetsFlutterBinding.ensureInitialized();
+    await Firebase.initializeApp();
+
     //Returns null members if no match found
     showLoadingDialog(context, 'Fetching...');
     Animal animal = Animal();
@@ -115,6 +118,9 @@ class _QRScannerState extends State<QRScanner> {
       return;
     }
     Animal? animal = await fetch(code);
+
+    WidgetsFlutterBinding.ensureInitialized();
+    await Firebase.initializeApp();
 
     if (animal.name == '') {
       showOKDialog(context, 'Error finding the animal.', () {

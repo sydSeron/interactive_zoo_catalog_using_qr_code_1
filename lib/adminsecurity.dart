@@ -18,6 +18,9 @@ class _AdminsecurityState extends State<Adminsecurity> {
   FirebaseFirestore? firestore;
 
   Future<List<Log>> fetch() async {
+    WidgetsFlutterBinding.ensureInitialized();
+    await Firebase.initializeApp();
+
     List<Log> logs = [];
     QuerySnapshot querySnapshot = await firestore!.collection('logs').orderBy('dateandtime', descending: true).get();
 

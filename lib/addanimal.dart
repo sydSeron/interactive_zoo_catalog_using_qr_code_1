@@ -131,6 +131,8 @@ class _AddAnimalState extends State<AddAnimal> {
 
         if (_image != null) {
           showLoadingDialog(context, 'Uploading...');
+          WidgetsFlutterBinding.ensureInitialized();
+          await Firebase.initializeApp();
           FirebaseStorage storage = FirebaseStorage.instance;
 
           File file = File(_image!.path);

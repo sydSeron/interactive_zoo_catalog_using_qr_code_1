@@ -68,6 +68,9 @@ class _EditanimalState extends State<Editanimal> {
   }
 
   void submit() async {
+    WidgetsFlutterBinding.ensureInitialized();
+    await Firebase.initializeApp();
+
     bool isConnected = await connectivityService.checkConnection();
     if (!isConnected) {
       showOKDialog(context, 'No internet connection. Please try again.', () {

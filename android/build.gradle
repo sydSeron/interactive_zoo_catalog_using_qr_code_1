@@ -18,6 +18,14 @@ subprojects {
     project.evaluationDependsOn(":app")
 }
 
+buildscript {
+    dependencies {
+        // Add this line to enable Firebase services
+        classpath 'com.google.gms:google-services:4.3.10' // Ensure it's the latest version
+    }
+}
+
+
 tasks.register("clean", Delete) {
     delete rootProject.buildDir
 }

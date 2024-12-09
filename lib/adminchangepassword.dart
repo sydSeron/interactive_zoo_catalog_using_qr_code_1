@@ -47,6 +47,9 @@ class _AdminchangepasswordState extends State<Adminchangepassword> {
       return;
     }
 
+    WidgetsFlutterBinding.ensureInitialized();
+    await Firebase.initializeApp();
+
     showLoadingDialog(context, 'Rechecking credentials...');
     isLoggedCorrectly(widget.logged).then((isCorrect) async {
       if (!isCorrect) {
