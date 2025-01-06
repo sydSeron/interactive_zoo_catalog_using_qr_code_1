@@ -119,11 +119,13 @@ class _HomeState extends State<Home> {
               color: isConnected ? Colors.green : Colors.red,
               padding: EdgeInsets.symmetric(vertical: 8.0),
               child: Center(
-                child: Text(
-                  isConnected ? "Connected to the Internet" : "No Internet Connection",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
+                child: Flexible(
+                  child: Text(
+                    isConnected ? "Connected to the Internet" : "No Internet Connection",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
@@ -167,7 +169,7 @@ class _HomeState extends State<Home> {
                 builder: (context, constraints) {
                   double totalPadding = 64.0;
                   double availableWidth = constraints.maxWidth - totalPadding;
-                  double imageSize = availableWidth * 0.75;
+                  double imageSize = min(availableWidth * 0.75, 200.0); // Set a max size
 
                   return Padding(
                     padding: const EdgeInsets.all(40.0),
