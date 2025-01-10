@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:camera/camera.dart';
+import 'package:camera_windows/camera_windows.dart';
+import 'package:simple_barcode_scanner/simple_barcode_scanner.dart';
+import 'package:camera_platform_interface/camera_platform_interface.dart';
+import 'package:zxing2/zxing2.dart';
+import 'dart:typed_data';
 import 'dart:async';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -13,19 +18,19 @@ class QRScanner extends StatefulWidget {
 }
 
 class _QRScannerState extends State<QRScanner> {
-  late final MobileScannerController cameraController;
-  bool isScanning = false;
+  CameraController? cameraController;
+  bool isCameraInitialized = false;
   FirebaseFirestore? firestore;
-
   late Image image;
   bool isConnected = true;
+
+  String qrCode = "";
 
   @override
   void initState() {
     super.initState();
     initializeFirebase();
-    cameraController = MobileScannerController();
-    startScanning();
+    setupCamera();
     _checkConnection();
   }
 
@@ -38,18 +43,42 @@ class _QRScannerState extends State<QRScanner> {
     });
   }
 
-  void startScanning() {
-    cameraController.start();
-    setState(() {
-      isScanning = true;
-    });
+  Future<void> setupCamera() async {
+    try {
+      // First check if cameraController exists, and dispose of it if so
+      if (cameraController != null) {
+        await cameraController!.dispose(); // Dispose of the previous controller
+      }
+
+      final cameras = await availableCameras();
+      if (cameras.isNotEmpty) {
+        // Initialize a new camera controller
+        cameraController = CameraController(cameras[0], ResolutionPreset.high);
+
+        // Wait for the camera to initialize
+        await cameraController!.initialize();
+
+        // Start streaming images for QR code detection
+        cameraController!.startImageStream((image) {
+          // Process the frame for QR code detection here
+          // Add your QR code detection logic
+        });
+
+        setState(() {
+          isCameraInitialized = true;
+        });
+      } else {
+        throw Exception('No cameras found.');
+      }
+    } catch (e) {
+      print('Error initializing camera: $e');
+    }
   }
 
-  void stopScanning() {
-    cameraController.stop();
-    setState(() {
-      isScanning = false;
-    });
+
+  void dispose() {
+    cameraController?.dispose();
+    super.dispose();
   }
 
   Future<Animal> fetch(String code) async {
@@ -151,7 +180,6 @@ class _QRScannerState extends State<QRScanner> {
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
           onPressed: () {
-            stopScanning();
             Navigator.of(context).pop();
           },
         ),
@@ -162,21 +190,11 @@ class _QRScannerState extends State<QRScanner> {
             child: Stack(
               alignment: Alignment.center,
               children: [
-                MobileScanner(
-                  controller: cameraController,
-                  onDetect: (barcode, arguments) {
-                    if (barcode.rawValue != null) {
-                      final String qrData = barcode.rawValue!;
-                      stopScanning();
-                      //Scanning success
-                      //Checks if qr is valid in firebase
-                      onSubmit(qrData);
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Failed to scan QR Code')),
-                      );
-                    }
-                  },
+                Container(
+                  color: Colors.black,
+                    child: isCameraInitialized
+                        ? CameraPreview(cameraController!)
+                        : Center(child: CircularProgressIndicator()),
                 ),
                 Positioned(
                   top: MediaQuery.of(context).size.height / 2,
@@ -194,12 +212,4 @@ class _QRScannerState extends State<QRScanner> {
       ),
     );
   }
-
-  @override
-  void dispose() {
-    cameraController.dispose();
-    super.dispose();
-  }
-
-  //
 }
