@@ -12,6 +12,7 @@ import 'dart:ui' as ui;
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/rendering.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:image_gallery_saver/image_gallery_saver.dart';
 
 class AddAnimal extends StatefulWidget {
   // Wallpaper
@@ -217,25 +218,18 @@ class _AddAnimalState extends State<AddAnimal> {
                   ),
                   ElevatedButton(
                     onPressed: () async {
-                      if (animal.qrcode != null)
-                        var status = await Permission.storage.request();
-                      var status = await Permission.manageExternalStorage.request();
                       try {
-                        final boundary = globalKey.currentContext
-                            ?.findRenderObject() as RenderRepaintBoundary?;
+                        final boundary = globalKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
                         if (boundary != null) {
                           final image = await boundary.toImage(pixelRatio: 3.0);
                           final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
                           if (byteData != null) {
-                            Directory? picturesDirectory = await getExternalStorageDirectory();
-                            if (picturesDirectory != null) {
-                              final qrFolder = Directory('/storage/emulated/0/Download');
-                              if (!await qrFolder.exists()) {
-                                await qrFolder.create(recursive: true);
-                              }
-                              final qrImageFile = File('${qrFolder.path}/${animal.qrcode}.png');
-                              await qrImageFile.writeAsBytes(byteData.buffer.asUint8List());
-                              showOKDialog(context, "QR code saved to ${qrImageFile.path}", () {
+                            final result = await ImageGallerySaver.saveImage(
+                              byteData.buffer.asUint8List(),
+                              name: animal.qrcode,
+                            );
+                            if (result['isSuccess']) {
+                              showOKDialog(context, "QR code saved to your gallery.", () {
                                 Navigator.pop(context);
                                 Navigator.pop(context);
                               });
