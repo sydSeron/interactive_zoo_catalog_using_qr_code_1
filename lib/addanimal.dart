@@ -12,6 +12,10 @@ import 'dart:ui' as ui;
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/rendering.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:zxing2/zxing2.dart';
+import 'package:zxing2/qrcode.dart';
+import 'package:image/image.dart' as img;
+import 'package:path/path.dart' as path;
 
 class AddAnimal extends StatefulWidget {
   // Wallpaper
@@ -219,31 +223,32 @@ class _AddAnimalState extends State<AddAnimal> {
                   ),
                   ElevatedButton(
                     onPressed: () async {
-                      if (animal.qrcode != null)
-                        var status = await Permission.storage.request();
-                      var status = await Permission.manageExternalStorage.request();
                       try {
-                        final boundary = globalKey.currentContext
-                            ?.findRenderObject() as RenderRepaintBoundary?;
-                        if (boundary != null) {
-                          final image = await boundary.toImage(pixelRatio: 3.0);
-                          final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-                          if (byteData != null) {
-                            Directory? picturesDirectory = await getExternalStorageDirectory();
-                            if (picturesDirectory != null) {
-                              final qrFolder = Directory('/storage/emulated/0/Download');
-                              if (!await qrFolder.exists()) {
-                                await qrFolder.create(recursive: true);
-                              }
-                              final qrImageFile = File('${qrFolder.path}/${animal.qrcode}.png');
-                              await qrImageFile.writeAsBytes(byteData.buffer.asUint8List());
-                              showOKDialog(context, "QR code saved to ${qrImageFile.path}", () {
-                                Navigator.pop(context);
-                                Navigator.pop(context);
-                              });
+                        var qrcode = Encoder.encode(animal.qrcode!, ErrorCorrectionLevel.h);
+                        var matrix = qrcode.matrix!;
+                        var scale = 4;
+
+                        var image = img.Image(
+                            width: matrix.width * scale,
+                            height: matrix.height * scale,
+                            numChannels: 4);
+                        for (var x = 0; x < matrix.width; x++) {
+                          for (var y = 0; y < matrix.height; y++) {
+                            if (matrix.get(x, y) == 1) {
+                              img.fillRect(image,
+                                  x1: x * scale,
+                                  y1: y * scale,
+                                  x2: x * scale + scale,
+                                  y2: y * scale + scale,
+                                  color: img.ColorRgba8(0, 0, 0, 0xFF));
                             }
                           }
                         }
+                        var pngBytes = img.encodePng(image);
+
+                        // Create a unique file name in the subfolder
+                        final String fileName = '${DateTime.now().millisecondsSinceEpoch}_${animal.name}';
+                        saveQrCodeToDesktop(pngBytes, fileName);
                       } catch (e) {
                         print("Error saving QR code: $e");
                         showOKDialog(context, "Failed to save QR code.", () {});
@@ -267,6 +272,31 @@ class _AddAnimalState extends State<AddAnimal> {
         });
           }
         });
+  }
+
+  void saveQrCodeToDesktop(List<int> pngBytes, String fileName) async {
+    try {
+      // Get the desktop directory from USERPROFILE
+      final String userProfile = Platform.environment['USERPROFILE']!;
+      final String desktopDir = path.join(userProfile, 'Desktop');
+
+      // Ensure the desktop directory exists (for safety)
+      final Directory desktopDirectory = Directory(desktopDir);
+      if (!desktopDirectory.existsSync()) {
+        throw Exception("Desktop directory not found.");
+      }
+
+      // Construct the file path
+      final String filePath = path.join(desktopDir, fileName);
+
+      // Write the file
+      File(filePath).writeAsBytesSync(pngBytes);
+      print('QR code saved at: $filePath');
+      showOKDialog(context, "Success! Saved at: $filePath", () {});
+    } catch (e) {
+      print('Failed to save QR code: $e');
+      showOKDialog(context, "Failed to save QR code.", () {});
+    }
   }
 
   Widget build(BuildContext context) {

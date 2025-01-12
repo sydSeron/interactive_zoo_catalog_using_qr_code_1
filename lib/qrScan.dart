@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
-import 'package:camera_windows/camera_windows.dart';
-import 'package:simple_barcode_scanner/simple_barcode_scanner.dart';
 import 'package:camera_platform_interface/camera_platform_interface.dart';
 import 'package:zxing2/zxing2.dart';
-import 'dart:typed_data';
+import 'package:zxing2/qrcode.dart';
 import 'dart:async';
+import 'package:path_provider/path_provider.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:image/image.dart' as img;
+import 'dart:io';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'classes.dart';
@@ -14,23 +16,24 @@ import 'viewer.dart';
 
 class QRScanner extends StatefulWidget {
   @override
+  final String wallpaper;
+  const QRScanner({Key? key, required this.wallpaper}) : super(key: key);
+
   _QRScannerState createState() => _QRScannerState();
 }
 
 class _QRScannerState extends State<QRScanner> {
-  CameraController? cameraController;
-  bool isCameraInitialized = false;
   FirebaseFirestore? firestore;
-  late Image image;
   bool isConnected = true;
 
-  String qrCode = "";
+  final ImagePicker _picker = ImagePicker();
+  File? _storedImage;
+  String? path;
 
   @override
   void initState() {
     super.initState();
     initializeFirebase();
-    setupCamera();
     _checkConnection();
   }
 
@@ -43,42 +46,86 @@ class _QRScannerState extends State<QRScanner> {
     });
   }
 
-  Future<void> setupCamera() async {
+  // Function to pick an image and save it
+  Future<void> pickAndSaveImage() async {
     try {
-      // First check if cameraController exists, and dispose of it if so
-      if (cameraController != null) {
-        await cameraController!.dispose(); // Dispose of the previous controller
-      }
+      // Let the user pick an image from their gallery
+      final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
 
-      final cameras = await availableCameras();
-      if (cameras.isNotEmpty) {
-        // Initialize a new camera controller
-        cameraController = CameraController(cameras[0], ResolutionPreset.high);
+      if (pickedFile != null) {
+        // Get the directory where the app can store files on Windows
+        final Directory appDir = await getApplicationSupportDirectory();
 
-        // Wait for the camera to initialize
-        await cameraController!.initialize();
+        // Define a subfolder named "uploaded_images"
+        final Directory imagesDir = Directory('${appDir.path}\\uploaded_images');
+        if (!imagesDir.existsSync()) {
+          await imagesDir.create(recursive: true); // Create folder if it doesn't exist
+        }
 
-        // Start streaming images for QR code detection
-        cameraController!.startImageStream((image) {
-          // Process the frame for QR code detection here
-          // Add your QR code detection logic
-        });
+        // Create a unique file name in the subfolder
+        final File imageFile = File(pickedFile.path);
+        final String fileName = '${DateTime.now().millisecondsSinceEpoch}_${imageFile.uri.pathSegments.last}';
+        final String savedPath = '${imagesDir.path}\\$fileName';
+        path = savedPath;
+
+        //Delete previous pics to save space
+        for (var file in imagesDir.listSync()) {
+          if (file is File) {
+            file.deleteSync(); // Delete the file
+          }
+        }
+
+        // Copy the selected image to the subfolder
+        final File savedImage = await imageFile.copy(savedPath);
 
         setState(() {
-          isCameraInitialized = true;
+          _storedImage = savedImage; // Update UI with the saved image
         });
+
+        print('Image saved at: $savedPath');
       } else {
-        throw Exception('No cameras found.');
+        print('No image selected');
       }
     } catch (e) {
-      print('Error initializing camera: $e');
+      print('Error picking and saving image: $e');
     }
   }
 
+  String? qrToString(String path) {
+    try {
+      var image = img.decodePng(File(path).readAsBytesSync())!;
 
-  void dispose() {
-    cameraController?.dispose();
-    super.dispose();
+      LuminanceSource source = RGBLuminanceSource(
+          image.width,
+          image.height,
+          image
+              .convert(numChannels: 4)
+              .getBytes(order: img.ChannelOrder.abgr)
+              .buffer
+              .asInt32List());
+      var bitmap = BinaryBitmap(GlobalHistogramBinarizer(source));
+
+      var reader = QRCodeReader();
+      var result = reader.decode(bitmap);
+
+      return result.text; // Return the QR code text
+    } catch (e) {
+      print('Error decoding QR code: $e');
+      return null; // Return null if decoding fails
+    }
+  }
+
+  void conv() {
+    if (path == null) {
+      showOKDialog(context, "No image uploaded, or no QR in the image.", (){});
+      return;
+    }
+    var res = qrToString(path!);
+    if (res == null) {
+      showOKDialog(context, "No image uploaded, or no QR in the image.", (){});
+    } else {
+      onSubmit(res.toString());
+    }
   }
 
   Future<Animal> fetch(String code) async {
@@ -116,8 +163,8 @@ class _QRScannerState extends State<QRScanner> {
       );
     }
 
-    image = Image.network(animal.imageurl ?? '');
-    await _loadImage(image);
+    var images = Image.network(animal.imageurl ?? '');
+    await _loadImage(images);
     Navigator.pop(context);
 
     return animal;
@@ -174,40 +221,76 @@ class _QRScannerState extends State<QRScanner> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        backgroundColor: Colors.lightGreen,
-        title: Text('Scan QR Code'),
+        backgroundColor: Colors.transparent,
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
-          onPressed: () {
+          onPressed: () async {
             Navigator.of(context).pop();
           },
         ),
+        iconTheme: IconThemeData(color: Colors.white),
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                Container(
-                  color: Colors.black,
-                    child: isCameraInitialized
-                        ? CameraPreview(cameraController!)
-                        : Center(child: CircularProgressIndicator()),
+      body: Stack(
+          alignment: Alignment.center,
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage(widget.wallpaper),
+                  fit: BoxFit.cover,
                 ),
-                Positioned(
-                  top: MediaQuery.of(context).size.height / 2,
-                  left: 20,
-                  right: 20,
-                  child: Container(
-                    height: 2,
-                    color: Colors.red,
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
+            Container(
+              color: Colors.black.withOpacity(0.5),
+            ),
+            SafeArea(
+              child: Column(
+                children: [
+                  _storedImage != null
+                      ? Image.file(
+                    _storedImage!,
+                    width: 200,
+                    height: 200,
+                    fit: BoxFit.cover,
+                  )
+                    : Column(
+                    children: [
+                      Image.asset(
+                        'images/qr-icon.png',
+                        width: 200,
+                        height: 200,
+                        fit: BoxFit.cover,
+                      ),
+                      SizedBox(height: 20,),
+                      Text('No image selected.', style: TextStyle(color: Colors.white),)
+                    ],
+                  ),
+                  SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () {
+                      pickAndSaveImage();
+                    },
+                    child: Text('Upload Image', style: TextStyle(color: Colors.white),),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.black.withOpacity(0.1),
+                    ),
+                  ),
+                  SizedBox(height: 20,),
+                  ElevatedButton(
+                    onPressed: () {
+                      conv();
+                    },
+                    child: Text('Scan', style: TextStyle(color: Colors.white),),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.black.withOpacity(0.1),
+                    ),
+                  ),
+                ],
+              ),
+            )
         ],
       ),
     );

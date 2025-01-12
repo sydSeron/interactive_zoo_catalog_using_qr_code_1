@@ -119,13 +119,11 @@ class _HomeState extends State<Home> {
               color: isConnected ? Colors.green : Colors.red,
               padding: EdgeInsets.symmetric(vertical: 8.0),
               child: Center(
-                child: Flexible(
-                  child: Text(
-                    isConnected ? "Connected to the Internet" : "No Internet Connection",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
+                child: Text(
+                  isConnected ? "Connected to the Internet" : "No Internet Connection",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
@@ -187,7 +185,7 @@ class _HomeState extends State<Home> {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
-                      Navigator.of(context).push(MaterialPageRoute(builder: (context) => QRScanner()));
+                      Navigator.of(context).push(MaterialPageRoute(builder: (context) => QRScanner(wallpaper: wallpaper,)));
                     },
                     child: Text(
                       'SCAN QR',

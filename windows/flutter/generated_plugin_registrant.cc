@@ -6,18 +6,14 @@
 
 #include "generated_plugin_registrant.h"
 
-#include <camera_windows/camera_windows.h>
 #include <cloud_firestore/cloud_firestore_plugin_c_api.h>
 #include <connectivity_plus/connectivity_plus_windows_plugin.h>
 #include <file_selector_windows/file_selector_windows.h>
 #include <firebase_core/firebase_core_plugin_c_api.h>
 #include <firebase_storage/firebase_storage_plugin_c_api.h>
 #include <permission_handler_windows/permission_handler_windows_plugin.h>
-#include <webview_windows/webview_windows_plugin.h>
 
 void RegisterPlugins(flutter::PluginRegistry* registry) {
-  CameraWindowsRegisterWithRegistrar(
-      registry->GetRegistrarForPlugin("CameraWindows"));
   CloudFirestorePluginCApiRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("CloudFirestorePluginCApi"));
   ConnectivityPlusWindowsPluginRegisterWithRegistrar(
@@ -30,6 +26,4 @@ void RegisterPlugins(flutter::PluginRegistry* registry) {
       registry->GetRegistrarForPlugin("FirebaseStoragePluginCApi"));
   PermissionHandlerWindowsPluginRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("PermissionHandlerWindowsPlugin"));
-  WebviewWindowsPluginRegisterWithRegistrar(
-      registry->GetRegistrarForPlugin("WebviewWindowsPlugin"));
 }
