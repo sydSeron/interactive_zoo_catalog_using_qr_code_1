@@ -46,40 +46,33 @@ class _QRScannerState extends State<QRScanner> {
     });
   }
 
-  // Function to pick an image and save it
   Future<void> pickAndSaveImage() async {
     try {
-      // Let the user pick an image from their gallery
       final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
 
       if (pickedFile != null) {
-        // Get the directory where the app can store files on Windows
         final Directory appDir = await getApplicationSupportDirectory();
 
-        // Define a subfolder named "uploaded_images"
         final Directory imagesDir = Directory('${appDir.path}\\uploaded_images');
         if (!imagesDir.existsSync()) {
           await imagesDir.create(recursive: true); // Create folder if it doesn't exist
         }
 
-        // Create a unique file name in the subfolder
         final File imageFile = File(pickedFile.path);
         final String fileName = '${DateTime.now().millisecondsSinceEpoch}_${imageFile.uri.pathSegments.last}';
         final String savedPath = '${imagesDir.path}\\$fileName';
         path = savedPath;
 
-        //Delete previous pics to save space
         for (var file in imagesDir.listSync()) {
           if (file is File) {
-            file.deleteSync(); // Delete the file
+            file.deleteSync();
           }
         }
 
-        // Copy the selected image to the subfolder
         final File savedImage = await imageFile.copy(savedPath);
 
         setState(() {
-          _storedImage = savedImage; // Update UI with the saved image
+          _storedImage = savedImage;
         });
 
         print('Image saved at: $savedPath');
@@ -147,7 +140,6 @@ class _QRScannerState extends State<QRScanner> {
 
     if (querySnapshot.docs.isNotEmpty) {
       animal = Animal(
-        //Dateadded missing, converted into string when uploaded to database, so dateAdded: ... not working
           name: querySnapshot.docs[0]['name'],
           sciname: querySnapshot.docs[0]['sciname'],
           zookeepername: querySnapshot.docs[0]['zookeepername'],

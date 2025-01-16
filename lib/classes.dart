@@ -35,3 +35,17 @@ class Log {
 
   Log({this.type, this.account, this.action, this.name, this.dateandtime});
 }
+
+class Visitor {
+  String? id;
+  int? year;
+  int? month;
+  int? day;
+
+  Visitor({this.id}) {
+    final now = DateTime.now();
+    year = now.year;
+    month = now.month;
+    day = now.day;
+  }
+}

@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -109,6 +108,28 @@ Future<bool> isLoggedCorrectly (String username) async {
     print(e);
     return false;
   }
+}
 
+String getMonthName(int month) {
+  List<String> months = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
 
+  if (month == 0) {
+    return '0';
+  }
+
+  return months[month - 1];  // Subtract 1 because list indices are 0-based
+}
+
+int getDaysInMonth(int month, int year) {
+  DateTime nextMonth = DateTime(year, month + 1, 1);
+  DateTime lastDayOfMonth = nextMonth.subtract(Duration(days: 1));
+
+  if (month == 0 || year == 0) {
+    return 0;
+  }
+
+  return lastDayOfMonth.day;
 }

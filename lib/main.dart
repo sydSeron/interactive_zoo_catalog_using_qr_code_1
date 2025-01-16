@@ -2,10 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:math';
 import 'package:firebase_core/firebase_core.dart'; // Import Firebase Core
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'accessories.dart'; // Import connectivity service
 import 'qrScan.dart';
 import 'credits.dart';
 import 'firebase_options.dart';
+import 'dart:io';
+import 'package:path/path.dart' as path;
+import 'classes.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,9 +34,13 @@ class _HomeState extends State<Home> {
   bool isConnected = true;
   bool Connectionbanner = true;
 
+  FirebaseFirestore? firestore;
+
   @override
   void initState() {
     super.initState();
+    initializeFirebase();
+    checkOrCreateUniqueIdFile();
 
     // Set a random wallpaper
     List<String> wallp = [
@@ -69,6 +77,56 @@ class _HomeState extends State<Home> {
 
 
     _checkInitialConnection();
+  }
+
+  void initializeFirebase() async {
+    WidgetsFlutterBinding.ensureInitialized();
+    await Firebase.initializeApp();
+    setState(() {
+      firestore = FirebaseFirestore.instance;
+    });
+  }
+
+  Future<void> checkOrCreateUniqueIdFile() async {
+    try {
+      // Get the desktop directory from USERPROFILE
+      final String userProfile = Platform.environment['USERPROFILE']!;
+      final String desktopDir = path.join(userProfile, 'Documents');
+
+      // Ensure the desktop directory exists (for safety)
+      final Directory docuDirectory = Directory(desktopDir);
+      if (!docuDirectory.existsSync()) {
+        throw Exception("Desktop directory not found.");
+      }
+
+      // Define the file path
+      final String filePath = '${docuDirectory.path}/MZQRID_unique_regis.txt';
+
+      // Check if the file exists
+      final File file = File(filePath);
+      if (file.existsSync()) {
+        print("File already exists: ${file.path}");
+        // Read the content if needed
+        final content = await file.readAsString();
+        print("File Content: $content");
+      } else {
+        // File doesn't exist, create it and write a unique ID
+        String random = generateRandomString(20);
+        String uniqueId = "MZQRID_${random}";
+        await file.writeAsString(uniqueId);
+        print("Unique ID file created at: ${file.path}");
+
+        Visitor visitor = Visitor(id: uniqueId);
+        await firestore?.collection('visitors').add({
+          'userId': visitor.id,
+          'day': visitor.day,
+          'month': visitor.month,
+          'year': visitor.year,
+        });
+      }
+    } catch (e) {
+      print("An error occurred: $e");
+    }
   }
 
   void _checkInitialConnection() async {
