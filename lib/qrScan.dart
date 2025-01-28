@@ -68,7 +68,6 @@ class _QRScannerState extends State<QRScanner> {
 
     if (querySnapshot.docs.isNotEmpty) {
       animal = Animal(
-        //Dateadded missing, converted into string when uploaded to database, so dateAdded: ... not working
           name: querySnapshot.docs[0]['name'],
           sciname: querySnapshot.docs[0]['sciname'],
           zookeepername: querySnapshot.docs[0]['zookeepername'],
@@ -97,7 +96,7 @@ class _QRScannerState extends State<QRScanner> {
 
     final ImageStreamListener listener = ImageStreamListener(
           (ImageInfo info, bool sync) {
-        completer.complete(); // Image is loaded, complete the future
+        completer.complete();
       },
       onError: (exception, stackTrace) {
         completer.completeError(exception); // Handle loading error
@@ -194,6 +193,4 @@ class _QRScannerState extends State<QRScanner> {
     cameraController.dispose();
     super.dispose();
   }
-
-  //
 }

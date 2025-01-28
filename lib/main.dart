@@ -1,14 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:math';
-import 'package:firebase_core/firebase_core.dart'; // Import Firebase Core
-import 'accessories.dart'; // Import connectivity service
+import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:interactive_zoo_catalog_using_qr_code/classes.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'accessories.dart';
 import 'qrScan.dart';
 import 'credits.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  // Initialize Firebase
+  if (kIsWeb) {
+    await Firebase.initializeApp(
+      options: FirebaseOptions(
+        apiKey: "AIzaSyCuK-iRFEdEns1uZACuhvBej3-7lMUY_BE",
+        authDomain: "trials-b0b95.firebaseapp.com",
+        projectId: "trials-b0b95",
+        storageBucket: "trials-b0b95.appspot.com",
+        messagingSenderId: "1682898445",
+        appId: "1:1682898445:web:fc8582a9a7fc78885e9f44",
+        measurementId: "G-5TE4GJX0JL",
+      ),
+    );
+  } else {
+    await Firebase.initializeApp(); // Default for mobile
+  }
 
   runApp(MaterialApp(
     home: Home(),
@@ -27,22 +48,26 @@ class _HomeState extends State<Home> {
   bool isConnected = true;
   bool Connectionbanner = true;
 
+  FirebaseFirestore? firestore;
+
   @override
   void initState() {
     super.initState();
+    initialize(); // Call the async initialization method
 
-    // Set a random wallpaper
+    // Wallpaper setup
     List<String> wallp = [
       'images/wallp1.jpg',
       'images/wallp2.jpg',
       'images/wallp3.jpg',
       'images/wallp4.jpg',
       'images/wallp5.jpg',
-      'images/wallp6.jpg'
+      'images/wallp6.jpg',
     ];
     final random = Random();
     wallpaper = wallp[random.nextInt(wallp.length)];
 
+    // Connection status listener
     connectivityService.connectionStatusStream.listen((status) {
       setState(() {
         isConnected = status;
@@ -53,8 +78,7 @@ class _HomeState extends State<Home> {
               Connectionbanner = false;
             });
           });
-        }
-        else {
+        } else {
           Future.delayed(Duration(seconds: 5), () {
             setState(() {
               Connectionbanner = true;
@@ -64,8 +88,66 @@ class _HomeState extends State<Home> {
       });
     });
 
-
     _checkInitialConnection();
+  }
+
+  Future<void> initialize() async {
+    await initializeFirebase(); // Async Firebase initialization
+    await checkOrCreateUniqueIdFile(); // Async file operation
+  }
+
+  Future<void> initializeFirebase() async { // Changed from void to Future<void>
+    WidgetsFlutterBinding.ensureInitialized();
+    await Firebase.initializeApp(); // Initialize Firebase
+    setState(() {
+      firestore = FirebaseFirestore.instance;
+    });
+  }
+
+  Future<void> checkOrCreateUniqueIdFile() async {
+    try {
+      // Request storage permission
+      var status = await Permission.storage.request();
+      if (!status.isGranted) {
+        print("Storage permission is required to proceed.");
+        return;
+      }
+
+      // Get the Downloads directory
+      final Directory? downloadsDir = Directory('/storage/emulated/0/Download');
+      if (downloadsDir == null || !downloadsDir.existsSync()) {
+        print("Downloads folder not found!");
+        return;
+      }
+
+      // Define the file path
+      final String filePath = '${downloadsDir.path}/MZQRID_unique_regis.txt';
+
+      // Check if the file exists
+      final File file = File(filePath);
+      if (file.existsSync()) {
+        print("File already exists: ${file.path}");
+        // Read the content if needed
+        final content = await file.readAsString();
+        print("File Content: $content");
+      } else {
+        // File doesn't exist, create it and write a unique ID
+        String random = generateRandomString(20);
+        String uniqueId = "MZQRID_${random}";
+        await file.writeAsString(uniqueId);
+        print("Unique ID file created at: ${file.path}");
+
+        Visitor visitor = Visitor(id: uniqueId);
+        await firestore?.collection('visitors').add({
+          'userId': visitor.id,
+          'day': visitor.day,
+          'month': visitor.month,
+          'year': visitor.year,
+        });
+      }
+    } catch (e) {
+      print("An error occurred: $e");
+    }
   }
 
   void _checkInitialConnection() async {

@@ -9,9 +9,7 @@ import 'package:qrcode_component/qr_code.dart';
 import 'classes.dart';
 import 'accessories.dart';
 import 'dart:ui' as ui;
-import 'package:path_provider/path_provider.dart';
 import 'package:flutter/rendering.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
 
 class AddAnimal extends StatefulWidget {
@@ -19,7 +17,6 @@ class AddAnimal extends StatefulWidget {
   final String wallpaper;
   final String logged;
   const AddAnimal({Key? key, required this.wallpaper, required this.logged}) : super(key: key);
-
 
   @override
   State<AddAnimal> createState() => _AddAnimalState();
